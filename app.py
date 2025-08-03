@@ -54,6 +54,51 @@ def init_app():
         traceback.print_exc()
         return False
 
+@app.route('/health')
+def health_check():
+    """헬스체크 및 초기화 상태 확인"""
+    status = {
+        'searcher': searcher is not None,
+        'fetcher': fetcher is not None,
+        'ratio_calculator': ratio_calculator is not None,
+        'ai_analyzer': ai_analyzer is not None,
+        'all_initialized': all([searcher, fetcher, ratio_calculator, ai_analyzer])
+    }
+    
+    # 파일 존재 여부 확인
+    import os
+    files_status = {
+        'corp_codes.json': os.path.exists('corp_codes.json'),
+        'corp_codes_sample.json': os.path.exists('corp_codes_sample.json'),
+        'templates_exist': os.path.exists('templates'),
+        'static_exist': os.path.exists('static')
+    }
+    
+    # 환경변수 확인
+    env_status = {
+        'DART_API_KEY': bool(os.environ.get('DART_API_KEY')),
+        'GEMINI_API_KEY': bool(os.environ.get('GEMINI_API_KEY')),
+        'PORT': os.environ.get('PORT', 'not_set')
+    }
+    
+    return jsonify({
+        'status': 'healthy' if status['all_initialized'] else 'initializing',
+        'modules': status,
+        'files': files_status,
+        'environment': env_status,
+        'working_directory': os.getcwd()
+    })
+
+@app.route('/init')
+def manual_init():
+    """수동 초기화 트리거"""
+    result = init_app()
+    return jsonify({
+        'success': result,
+        'message': '초기화 성공!' if result else '초기화 실패. 로그를 확인하세요.',
+        'redirect_to_health': '/health'
+    })
+
 @app.route('/')
 def index():
     """메인 페이지"""
