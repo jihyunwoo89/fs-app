@@ -479,17 +479,9 @@
                 <div class="row">
                     <div class="col-lg-6">
                         <div class="chart-container">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h4 class="mb-0">
-                                    <i class="fas fa-robot text-primary"></i> AI 재무제표 분석
-                                </h4>
-                                <div class="d-flex align-items-center">
-                                    <label class="form-label me-2 mb-0" style="font-size: 14px;">분석 연도:</label>
-                                    <select id="aiAnalysisYearSelect" class="form-select form-select-sm ai-year-select">
-                                        <option value="">연도 선택</option>
-                                    </select>
-                                </div>
-                            </div>
+                            <h4 class="mb-3">
+                                <i class="fas fa-robot text-primary"></i> AI 재무제표 분석
+                            </h4>
                             <div id="aiAnalysisContent">
                                 <div class="loading-chart">
                                     <div class="spinner-border text-primary"></div>
@@ -547,8 +539,9 @@
             loadLatestFinancialData();
             updateCharts();
             
-            // 초기 분석연도에 따른 AI 비교 분석 로드
+            // 초기 분석연도에 따른 AI 분석 로드
             const initialYear = document.getElementById('specificYear').value || '2023';
+            loadAIFinancialAnalysis(initialYear);
             updateAIComparisonWithPreviousYear(initialYear);
         });
 
@@ -615,10 +608,8 @@
             // 메트릭 데이터 새로 로드
             await loadLatestFinancialData();
             
-            // AI 분석도 새 연도로 업데이트
-            if (document.getElementById('ai-analysis-tab').classList.contains('active')) {
-                loadAIFinancialAnalysis(year);
-            }
+            // AI 재무제표 분석 업데이트 (항상 선택 연도로 업데이트)
+            loadAIFinancialAnalysis(year);
             
             // AI 비교 분석 업데이트 (선택 연도 vs 전년도)
             await updateAIComparisonWithPreviousYear(year);
@@ -1156,9 +1147,6 @@
                  const latestYear = yearArray[yearArray.length - 1];
                  console.log('Loading AI analysis for years:', years);
                  
-                 // 연도 선택 드롭다운 초기화
-                 initAIAnalysisYearSelect(yearArray, latestYear);
-                 
                  // AI 재무제표 분석 로드 (기본값: 최신년도)
                  loadAIFinancialAnalysis(latestYear);
                  
@@ -1170,43 +1158,7 @@
              }
          }
 
-         // AI 분석 연도 선택 드롭다운 초기화
-         function initAIAnalysisYearSelect(yearArray, defaultYear) {
-             const select = document.getElementById('aiAnalysisYearSelect');
-             
-             // 기존 옵션 제거 (첫 번째 옵션 제외)
-             select.innerHTML = '<option value="">연도 선택</option>';
-             
-             // 연도 옵션 추가 (최신년도부터 역순)
-             const sortedYears = [...yearArray].sort((a, b) => b - a);
-             sortedYears.forEach(year => {
-                 const option = document.createElement('option');
-                 option.value = year;
-                 option.textContent = `${year}년`;
-                 if (year === defaultYear) {
-                     option.selected = true;
-                 }
-                 select.appendChild(option);
-             });
 
-             // "연도 선택" 옵션 제거하고 기본값 설정
-             if (defaultYear) {
-                 select.querySelector('option[value=""]').remove();
-             }
-             
-             // 기존 이벤트 리스너 제거 후 새로 추가
-             select.removeEventListener('change', handleYearChange);
-             select.addEventListener('change', handleYearChange);
-         }
-
-         // 연도 변경 핸들러 함수
-         function handleYearChange() {
-             const selectedYear = this.value;
-             if (selectedYear) {
-                 console.log('AI 분석 연도 변경:', selectedYear);
-                 loadAIFinancialAnalysis(selectedYear);
-             }
-         }
 
          // AI 재무제표 분석 로드
          async function loadAIFinancialAnalysis(year) {
@@ -1214,7 +1166,7 @@
                  document.getElementById('aiAnalysisContent').innerHTML = `
                      <div class="alert alert-info">
                          <i class="fas fa-calendar-alt"></i>
-                         위에서 분석할 연도를 선택해주세요.
+                         상단에서 사업연도를 선택해주세요.
                      </div>
                  `;
                  return;
