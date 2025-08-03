@@ -47,12 +47,11 @@
              color: #495057;
          }
 
-         /* 재무상태표 박스 시각화 스타일 */
+         /* 재무상태표 박스 시각화 스타일 - 3분할 구조 */
          .balance-sheet-container {
              display: flex;
              justify-content: center;
-             align-items: flex-end;
-             gap: 30px;
+             align-items: center;
              padding: 20px;
              min-height: 400px;
              background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -60,63 +59,66 @@
              margin: 20px 0;
          }
 
-         .balance-box {
+         .single-balance-box {
              position: relative;
              border-radius: 8px;
              box-shadow: 0 4px 15px rgba(0,0,0,0.1);
              transition: all 0.3s ease;
              display: flex;
-             flex-direction: column;
-             justify-content: flex-end;
-             min-width: 200px;
+             width: 600px;
+             height: 300px;
+             background: white;
+             overflow: hidden;
          }
 
-         .balance-box:hover {
-             transform: translateY(-5px);
+         .single-balance-box:hover {
+             transform: translateY(-3px);
              box-shadow: 0 8px 25px rgba(0,0,0,0.15);
          }
 
-         .assets-box {
+         .assets-section {
+             flex: 1;
              background: linear-gradient(180deg, #28a745 0%, #20c997 100%);
              color: white;
+             display: flex;
+             flex-direction: column;
+             position: relative;
          }
 
-         .liabilities-equity-box {
+         .liabilities-equity-section {
+             flex: 1;
+             display: flex;
+             flex-direction: column;
+         }
+
+         .liability-section {
+             flex: 1;
+             background: linear-gradient(180deg, #dc3545 0%, #fd7e14 100%);
+             color: white;
+             display: flex;
+             flex-direction: column;
+             border-bottom: 2px solid rgba(255,255,255,0.3);
+         }
+
+         .equity-section {
+             flex: 1;
              background: linear-gradient(180deg, #6f42c1 0%, #e83e8c 100%);
              color: white;
              display: flex;
              flex-direction: column;
          }
 
-         .liability-section {
-             background: rgba(108, 117, 125, 0.9);
-             border-bottom: 2px solid rgba(255,255,255,0.2);
-             flex: 1;
-             display: flex;
-             flex-direction: column;
-             justify-content: center;
-         }
-
-         .equity-section {
-             background: rgba(52, 58, 64, 0.9);
-             flex: 1;
-             display: flex;
-             flex-direction: column;
-             justify-content: center;
-         }
-
-         .box-header {
+         .section-header {
              text-align: center;
-             padding: 15px;
+             padding: 10px;
              font-weight: bold;
-             font-size: 16px;
+             font-size: 14px;
              background: rgba(255,255,255,0.2);
-             margin-bottom: 15px;
-             border-radius: 8px 8px 0 0;
+             border-bottom: 1px solid rgba(255,255,255,0.1);
          }
 
-         .box-content {
-             padding: 20px;
+         .section-content {
+             padding: 15px;
              text-align: center;
              flex: 1;
              display: flex;
@@ -125,42 +127,45 @@
          }
 
          .amount-display {
-             font-size: 24px;
+             font-size: 18px;
              font-weight: bold;
-             margin: 10px 0;
+             margin: 8px 0;
              text-shadow: 0 2px 4px rgba(0,0,0,0.3);
          }
 
          .amount-label {
-             font-size: 14px;
+             font-size: 12px;
              opacity: 0.9;
-             margin-bottom: 8px;
+             margin-bottom: 5px;
          }
 
-         .balance-equation {
-             text-align: center;
-             margin: 20px 0;
-             font-size: 18px;
-             font-weight: bold;
-             color: #495057;
-         }
-
-         .equation-symbol {
-             margin: 0 15px;
+         .assets-section .amount-display {
              font-size: 24px;
-             color: #007bff;
+         }
+
+         .assets-section .section-header {
+             font-size: 18px;
+             padding: 15px;
+         }
+
+         .balance-divider {
+             width: 2px;
+             background: rgba(0,0,0,0.1);
          }
 
          @media (max-width: 768px) {
-             .balance-sheet-container {
-                 flex-direction: column;
-                 align-items: center;
-                 gap: 20px;
+             .single-balance-box {
+                 width: 100%;
+                 max-width: 500px;
+                 height: 250px;
              }
              
-             .balance-box {
-                 width: 100%;
-                 max-width: 300px;
+             .amount-display {
+                 font-size: 16px;
+             }
+             
+             .assets-section .amount-display {
+                 font-size: 20px;
              }
          }
     </style>
@@ -445,7 +450,6 @@
                         <div class="chart-container">
                             <h4 class="mb-3 text-center">
                                 <i class="fas fa-building text-primary"></i> 재무상태표 구조
-                                <small class="text-muted ms-2">자산 = 부채 + 자본</small>
                             </h4>
                             <div id="balanceSheetBoxes">
                                 <div class="loading-chart">
@@ -1055,16 +1059,6 @@
                  const liabilities = data.balance_sheet?.부채총계 || data.balance_sheet?.부채 || 0;
                  const equity = data.balance_sheet?.자본총계 || data.balance_sheet?.자본 || assets - liabilities;
                  
-                 // 최대값을 기준으로 높이 계산 (최소 200px, 최대 400px)
-                 const maxAmount = Math.max(assets, liabilities + equity);
-                 const minHeight = 200;
-                 const maxHeight = 400;
-                 
-                 const assetsHeight = Math.max(minHeight, (assets / maxAmount) * maxHeight);
-                 const liabilitiesHeight = liabilities > 0 ? Math.max(50, (liabilities / maxAmount) * maxHeight) : 50;
-                 const equityHeight = equity > 0 ? Math.max(50, (equity / maxAmount) * maxHeight) : 50;
-                 const totalRightHeight = liabilitiesHeight + equityHeight;
-                 
                  // 숫자 포맷팅 함수
                  function formatAmount(amount) {
                      if (amount >= 1000000000000) return (amount / 1000000000000).toFixed(1) + '조원';
@@ -1073,43 +1067,47 @@
                      return amount.toLocaleString() + '원';
                  }
                  
-                 // 박스 HTML 생성
+                 // 3분할 박스 HTML 생성
                  const boxesHTML = `
-                     <div class="balance-equation">
-                         <span>자산</span>
-                         <span class="equation-symbol">=</span>
-                         <span>부채</span>
-                         <span class="equation-symbol">+</span>
-                         <span>자본</span>
-                     </div>
-                     
                      <div class="balance-sheet-container">
-                         <!-- 자산 박스 -->
-                         <div class="balance-box assets-box" style="height: ${assetsHeight}px;">
-                             <div class="box-header">
-                                 <i class="fas fa-building"></i> 자산
-                             </div>
-                             <div class="box-content">
-                                 <div class="amount-label">총 자산</div>
-                                 <div class="amount-display">${formatAmount(assets)}</div>
-                                 <div class="amount-label">${year}년 기준</div>
-                             </div>
-                         </div>
-                         
-                         <!-- 부채 + 자본 박스 -->
-                         <div class="balance-box liabilities-equity-box" style="height: ${totalRightHeight}px;">
-                             <!-- 부채 섹션 -->
-                             <div class="liability-section" style="height: ${liabilitiesHeight}px;">
-                                 <div class="box-content">
-                                     <div class="amount-label">부채</div>
-                                     <div class="amount-display">${formatAmount(liabilities)}</div>
+                         <div class="single-balance-box">
+                             <!-- 왼쪽: 자산 섹션 -->
+                             <div class="assets-section">
+                                 <div class="section-header">
+                                     <i class="fas fa-building"></i> 자산
+                                 </div>
+                                 <div class="section-content">
+                                     <div class="amount-label">총 자산</div>
+                                     <div class="amount-display">${formatAmount(assets)}</div>
+                                     <div class="amount-label">${year}년 기준</div>
                                  </div>
                              </div>
-                             <!-- 자본 섹션 -->
-                             <div class="equity-section" style="height: ${equityHeight}px;">
-                                 <div class="box-content">
-                                     <div class="amount-label">자본</div>
-                                     <div class="amount-display">${formatAmount(equity)}</div>
+                             
+                             <!-- 가운데 구분선 -->
+                             <div class="balance-divider"></div>
+                             
+                             <!-- 오른쪽: 부채 + 자본 섹션 -->
+                             <div class="liabilities-equity-section">
+                                 <!-- 상단: 부채 섹션 -->
+                                 <div class="liability-section">
+                                     <div class="section-header">
+                                         <i class="fas fa-credit-card"></i> 부채
+                                     </div>
+                                     <div class="section-content">
+                                         <div class="amount-label">총 부채</div>
+                                         <div class="amount-display">${formatAmount(liabilities)}</div>
+                                     </div>
+                                 </div>
+                                 
+                                 <!-- 하단: 자본 섹션 -->
+                                 <div class="equity-section">
+                                     <div class="section-header">
+                                         <i class="fas fa-coins"></i> 자본
+                                     </div>
+                                     <div class="section-content">
+                                         <div class="amount-label">총 자본</div>
+                                         <div class="amount-display">${formatAmount(equity)}</div>
+                                     </div>
                                  </div>
                              </div>
                          </div>
