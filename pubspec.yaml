@@ -1,0 +1,13 @@
+name: fs_project
+description: Open DART API를 사용하는 Dart 프로젝트
+version: 1.0.0
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  dotenv: ^4.2.0
+  http: ^1.1.0
+
+dev_dependencies:
+  test: ^1.24.0 

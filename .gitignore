@@ -1,0 +1,32 @@
+# 환경변수 파일
+.env
+
+# Dart 관련
+.dart_tool/
+.packages
+build/
+pubspec.lock
+
+# IDE 관련
+.vscode/
+.idea/
+
+# OS 관련
+.DS_Store
+Thumbs.db
+
+# 다운로드된 데이터 파일
+corp_code_list.zip
+*.zip
+
+# Python 관련
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.coverage
+.pytest_cache/
+
+# .env.example은 Git에 포함됩니다

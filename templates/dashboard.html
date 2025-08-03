@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 {{ company.corp_name }} - 재무제표 대시보드</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .ai-analysis-content {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .ai-analysis-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .ai-analysis-text h6 {
+            margin-top: 15px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .ai-analysis-text strong {
+            color: #007bff;
+            font-weight: 600;
+        }
+
+                 .ai-analysis-text .fas {
+             margin-right: 5px;
+         }
+
+         .ai-year-select {
+             min-width: 100px;
+             font-size: 13px;
+         }
+
+         .chart-container .d-flex h4 {
+             color: #495057;
+         }
+    </style>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 0;
+            margin-bottom: 30px;
+        }
+        
+        .company-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        .metric-change {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        
+        .positive { color: #28a745; }
+        .negative { color: #dc3545; }
+        
+        .nav-pills .nav-link {
+            border-radius: 25px;
+            padding: 10px 20px;
+            margin: 0 5px;
+            font-weight: 600;
+        }
+        
+        .nav-pills .nav-link.active {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+        
+        .loading-chart {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+        }
+        
+        .btn-back {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 25px;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .stock-info {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-left: 15px;
+        }
+        
+        .year-selector {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <div class="header-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="company-info">
+                        <h1 class="mb-3">
+                            <i class="fas fa-building"></i> {{ company.corp_name }}
+                            {% if company.stock_code %}
+                                <span class="stock-info">
+                                    <i class="fas fa-chart-line"></i> {{ company.stock_code }}
+                                </span>
+                            {% else %}
+                                <span class="stock-info">
+                                    <i class="fas fa-info-circle"></i> 비상장
+                                </span>
+                            {% endif %}
+                        </h1>
+                        <p class="mb-2">
+                            <i class="fas fa-barcode"></i> 기업코드: {{ company.corp_code }}
+                        </p>
+                        <p class="mb-0">
+                            <i class="fas fa-calendar"></i> 최종 수정: {{ company.modify_date }}
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="/" class="btn btn-back">
+                        <i class="fas fa-arrow-left"></i> 검색으로 돌아가기
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Year Selector -->
+        <div class="year-selector">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt"></i> 조회 연도 선택
+                    </h5>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-end align-items-center">
+                        <label for="yearRange" class="form-label me-3 mb-0">연도 범위:</label>
+                        <select id="yearRange" class="form-select" style="width: auto;" onchange="updateCharts()">
+                            <option value="2021,2022,2023">2021-2023 (3년)</option>
+                            <option value="2020,2021,2022,2023">2020-2023 (4년)</option>
+                            <option value="2019,2020,2021,2022,2023">2019-2023 (5년)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Metrics -->
+        <div id="metricsSection">
+            <div class="loading-chart">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">데이터 로딩 중...</span>
+                </div>
+                <p class="mt-3">재무 데이터를 불러오는 중입니다...</p>
+            </div>
+        </div>
+
+        <!-- Chart Navigation -->
+        <ul class="nav nav-pills justify-content-center mb-4" id="chartTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="trend-tab" data-bs-toggle="pill" 
+                        data-bs-target="#trend-pane" type="button" role="tab">
+                    <i class="fas fa-chart-line"></i> 추세 분석
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="structure-tab" data-bs-toggle="pill" 
+                        data-bs-target="#structure-pane" type="button" role="tab">
+                    <i class="fas fa-chart-pie"></i> 구조 분석
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="ratios-tab" data-bs-toggle="pill" 
+                        data-bs-target="#ratios-pane" type="button" role="tab">
+                    <i class="fas fa-calculator"></i> 재무비율
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="comparison-tab" data-bs-toggle="pill" 
+                        data-bs-target="#comparison-pane" type="button" role="tab">
+                    <i class="fas fa-balance-scale"></i> 당기vs전기 비교
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="ai-analysis-tab" data-bs-toggle="pill" 
+                        data-bs-target="#ai-analysis-pane" type="button" role="tab">
+                    <i class="fas fa-robot"></i> AI 분석
+                </button>
+            </li>
+        </ul>
+
+        <!-- Chart Content -->
+        <div class="tab-content" id="chartContent">
+            <!-- Trend Analysis Tab -->
+            <div class="tab-pane fade show active" id="trend-pane" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h4 class="mb-3">
+                                <i class="fas fa-chart-line text-primary"></i> 매출액 추세
+                            </h4>
+                            <div id="revenueChart">
+                                <div class="loading-chart">
+                                    <div class="spinner-border text-primary"></div>
+                                    <p class="mt-3">차트 생성 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h4 class="mb-3">
+                                <i class="fas fa-chart-line text-success"></i> 순이익 추세
+                            </h4>
+                            <div id="profitChart">
+                                <div class="loading-chart">
+                                    <div class="spinner-border text-success"></div>
+                                    <p class="mt-3">차트 생성 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Structure Analysis Tab -->
+            <div class="tab-pane fade" id="structure-pane" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h4 class="mb-3">
+                                <i class="fas fa-chart-pie text-info"></i> 자산 구조
+                            </h4>
+                            <div id="assetsChart">
+                                <div class="loading-chart">
+                                    <div class="spinner-border text-info"></div>
+                                    <p class="mt-3">차트 생성 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h4 class="mb-3">
+                                <i class="fas fa-chart-bar text-warning"></i> 자본 vs 부채
+                            </h4>
+                            <div id="debtEquityChart">
+                                <div class="loading-chart">
+                                    <div class="spinner-border text-warning"></div>
+                                    <p class="mt-3">차트 생성 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Ratios Tab -->
+            <div class="tab-pane fade" id="ratios-pane" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h4 class="mb-3">
+                                <i class="fas fa-chart-line text-success"></i> 수익성 비율
+                            </h4>
+                            <div id="profitabilityChart">
+                                <div class="loading-chart">
+                                    <div class="spinner-border text-success"></div>
+                                    <p class="mt-3">차트 생성 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h4 class="mb-3">
+                                <i class="fas fa-shield-alt text-primary"></i> 안정성 비율
+                            </h4>
+                            <div id="stabilityChart">
+                                <div class="loading-chart">
+                                    <div class="spinner-border text-primary"></div>
+                                    <p class="mt-3">차트 생성 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h4 class="mb-3">
+                                <i class="fas fa-seedling text-info"></i> 성장성 비율
+                            </h4>
+                            <div id="growthChart">
+                                <div class="loading-chart">
+                                    <div class="spinner-border text-info"></div>
+                                    <p class="mt-3">차트 생성 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h4 class="mb-3">
+                                <i class="fas fa-radar-chart text-warning"></i> 종합 비율 분석
+                            </h4>
+                            <div id="comparisonChart">
+                                <div class="loading-chart">
+                                    <div class="spinner-border text-warning"></div>
+                                    <p class="mt-3">차트 생성 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison Tab -->
+            <div class="tab-pane fade" id="comparison-pane" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h4 class="mb-3">
+                                <i class="fas fa-chart-bar text-primary"></i> 손익계산서 비교
+                            </h4>
+                            <div id="incomeComparisonChart">
+                                <div class="loading-chart">
+                                    <div class="spinner-border text-primary"></div>
+                                    <p class="mt-3">차트 생성 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h4 class="mb-3">
+                                <i class="fas fa-chart-bar text-success"></i> 재무상태표 비교
+                            </h4>
+                            <div id="balanceComparisonChart">
+                                <div class="loading-chart">
+                                    <div class="spinner-border text-success"></div>
+                                    <p class="mt-3">차트 생성 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h4 class="mb-3">
+                                <i class="fas fa-chart-line text-warning"></i> 증감률 분석
+                            </h4>
+                            <div id="growthAnalysisChart">
+                                <div class="loading-chart">
+                                    <div class="spinner-border text-warning"></div>
+                                    <p class="mt-3">차트 생성 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h4 class="mb-3">
+                                <i class="fas fa-table text-info"></i> 상세 비교 데이터
+                            </h4>
+                            <div id="comparisonDataTable">
+                                <div class="loading-chart">
+                                    <div class="spinner-border text-info"></div>
+                                    <p class="mt-3">데이터 로딩 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Analysis Tab -->
+            <div class="tab-pane fade" id="ai-analysis-pane" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-robot text-primary"></i> AI 재무제표 분석
+                                </h4>
+                                <div class="d-flex align-items-center">
+                                    <label class="form-label me-2 mb-0" style="font-size: 14px;">분석 연도:</label>
+                                    <select id="aiAnalysisYearSelect" class="form-select form-select-sm ai-year-select">
+                                        <option value="">연도 선택</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="aiAnalysisContent">
+                                <div class="loading-chart">
+                                    <div class="spinner-border text-primary"></div>
+                                    <p class="mt-3">AI 분석 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h4 class="mb-3">
+                                <i class="fas fa-chart-line text-success"></i> AI 비교 분석
+                            </h4>
+                            <div id="aiComparisonContent">
+                                <div class="loading-chart">
+                                    <div class="spinner-border text-success"></div>
+                                    <p class="mt-3">AI 비교 분석 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const corpCode = '{{ corp_code }}';
+        let currentFinancialData = null;
+
+        // 페이지 로드 시 초기 데이터 로드
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, checking Plotly...');
+            
+            // Plotly 라이브러리가 로드되었는지 확인
+            if (typeof Plotly === 'undefined') {
+                console.error('Plotly library not loaded!');
+                document.getElementById('revenueChart').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Plotly 라이브러리를 로드할 수 없습니다. 인터넷 연결을 확인해주세요.
+                    </div>
+                `;
+                document.getElementById('profitChart').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Plotly 라이브러리를 로드할 수 없습니다. 인터넷 연결을 확인해주세요.
+                    </div>
+                `;
+                return;
+            }
+            
+            console.log('Plotly loaded successfully');
+            loadLatestFinancialData();
+            updateCharts();
+        });
+
+        // 최신 재무 데이터 로드 (메트릭 표시용)
+        async function loadLatestFinancialData() {
+            try {
+                const response = await fetch(`/api/financial/${corpCode}/2023`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    document.getElementById('metricsSection').innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            2023년 데이터를 불러올 수 없습니다. 다른 연도를 시도해보세요.
+                        </div>
+                    `;
+                    return;
+                }
+
+                currentFinancialData = data;
+                displayMetrics(data);
+                
+            } catch (error) {
+                console.error('Error loading financial data:', error);
+                document.getElementById('metricsSection').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        데이터 로딩 중 오류가 발생했습니다.
+                    </div>
+                `;
+            }
+        }
+
+        // 주요 지표 표시
+        function displayMetrics(data) {
+            const rawData = data.raw_data || [];
+            
+            // 주요 지표 추출
+            const metrics = {
+                revenue: findMetric(rawData, '매출액', 'IS'),
+                profit: findMetric(rawData, '당기순이익', 'IS'),
+                assets: findMetric(rawData, '자산총계', 'BS'),
+                equity: findMetric(rawData, '자본총계', 'BS')
+            };
+
+            let html = '<div class="row">';
+            
+            if (metrics.revenue) {
+                html += createMetricCard('매출액', metrics.revenue, 'fa-chart-line', 'primary');
+            }
+            if (metrics.profit) {
+                html += createMetricCard('순이익', metrics.profit, 'fa-coins', 'success');
+            }
+            if (metrics.assets) {
+                html += createMetricCard('자산총계', metrics.assets, 'fa-building', 'info');
+            }
+            if (metrics.equity) {
+                html += createMetricCard('자본총계', metrics.equity, 'fa-piggy-bank', 'warning');
+            }
+            
+            html += '</div>';
+            
+            document.getElementById('metricsSection').innerHTML = html;
+        }
+
+        // 지표 찾기 헬퍼 함수
+        function findMetric(rawData, accountName, sjDiv) {
+            for (const item of rawData) {
+                if (item.account_name.includes(accountName) && item.sj_div === sjDiv) {
+                    return item;
+                }
+            }
+            return null;
+        }
+
+        // 메트릭 카드 생성
+        function createMetricCard(title, metric, icon, color) {
+            const currentAmount = metric.current_year.amount;
+            const previousAmount = metric.previous_year.amount;
+            const change = previousAmount > 0 ? ((currentAmount - previousAmount) / previousAmount * 100) : 0;
+            const changeClass = change >= 0 ? 'positive' : 'negative';
+            const changeIcon = change >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+            
+            return `
+                <div class="col-lg-3 col-md-6">
+                    <div class="metric-card">
+                        <div class="text-${color} mb-2">
+                            <i class="fas ${icon} fa-2x"></i>
+                        </div>
+                        <div class="metric-value">
+                            ${formatKoreanWon(currentAmount)}
+                        </div>
+                        <div class="metric-label">${title}</div>
+                        <div class="metric-change ${changeClass}">
+                            <i class="fas ${changeIcon}"></i>
+                            ${Math.abs(change).toFixed(1)}%
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 한국 원화 형식으로 변환
+        function formatKoreanWon(amount) {
+            const trillion = Math.floor(amount / 1_000_000_000_000);
+            const billion = Math.floor((amount % 1_000_000_000_000) / 1_000_000_000);
+            
+            if (trillion > 0) {
+                if (billion > 0) {
+                    return `${trillion}.${Math.floor(billion/100)}조원`;
+                } else {
+                    return `${trillion}조원`;
+                }
+            } else if (billion > 0) {
+                return `${billion.toLocaleString()}억원`;
+            } else {
+                return `${Math.floor(amount / 100_000_000).toLocaleString()}억원`;
+            }
+        }
+
+        // 차트 업데이트
+        async function updateCharts() {
+            const yearRange = document.getElementById('yearRange').value;
+            
+            // 추세 차트 로드
+            loadTrendCharts(yearRange);
+            
+            // 구조 차트 로드
+            loadStructureCharts();
+            
+            // 재무비율 차트 로드
+            loadRatioCharts(yearRange);
+            
+            // 당기vs전기 비교 차트 로드
+            loadComparisonCharts(yearRange);
+            
+            // AI 분석 로드
+            loadAIAnalysis(yearRange);
+        }
+
+        // 추세 차트 로드
+        async function loadTrendCharts(years) {
+            try {
+                console.log('Loading trend charts for years:', years);
+                const response = await fetch(`/api/chart/${corpCode}?type=trend&years=${years}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const charts = await response.json();
+                console.log('Received charts data:', charts);
+                
+                if (charts.error) {
+                    console.error('Chart error:', charts.error);
+                    document.getElementById('revenueChart').innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            매출액 차트 생성 실패: ${charts.error}
+                        </div>
+                    `;
+                    document.getElementById('profitChart').innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            순이익 차트 생성 실패: ${charts.error}
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (charts.revenue_trend) {
+                    console.log('Creating revenue chart...');
+                    document.getElementById('revenueChart').innerHTML = ''; // 로딩 메시지 제거
+                    Plotly.newPlot('revenueChart', charts.revenue_trend.data, charts.revenue_trend.layout);
+                    console.log('Revenue chart created successfully');
+                } else {
+                    document.getElementById('revenueChart').innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            매출액 데이터가 없습니다.
+                        </div>
+                    `;
+                }
+                
+                if (charts.profit_trend) {
+                    console.log('Creating profit chart...');
+                    document.getElementById('profitChart').innerHTML = ''; // 로딩 메시지 제거
+                    Plotly.newPlot('profitChart', charts.profit_trend.data, charts.profit_trend.layout);
+                    console.log('Profit chart created successfully');
+                } else {
+                    document.getElementById('profitChart').innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            순이익 데이터가 없습니다.
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Error loading trend charts:', error);
+                document.getElementById('revenueChart').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        매출액 차트 로딩 실패: ${error.message}
+                    </div>
+                `;
+                document.getElementById('profitChart').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        순이익 차트 로딩 실패: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // 구조 차트 로드
+        async function loadStructureCharts() {
+            try {
+                console.log('Loading structure charts...');
+                const response = await fetch(`/api/chart/${corpCode}?type=structure`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const charts = await response.json();
+                console.log('Received structure charts data:', charts);
+                
+                if (charts.error) {
+                    console.error('Chart error:', charts.error);
+                    document.getElementById('assetsChart').innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            자산구조 차트 생성 실패: ${charts.error}
+                        </div>
+                    `;
+                    document.getElementById('debtEquityChart').innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            자본vs부채 차트 생성 실패: ${charts.error}
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (charts.assets_structure) {
+                    console.log('Creating assets chart...');
+                    document.getElementById('assetsChart').innerHTML = ''; // 로딩 메시지 제거
+                    Plotly.newPlot('assetsChart', charts.assets_structure.data, charts.assets_structure.layout);
+                    console.log('Assets chart created successfully');
+                } else {
+                    document.getElementById('assetsChart').innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            자산구조 데이터가 없습니다.
+                        </div>
+                    `;
+                }
+                
+                if (charts.debt_equity) {
+                    console.log('Creating debt-equity chart...');
+                    document.getElementById('debtEquityChart').innerHTML = ''; // 로딩 메시지 제거
+                    Plotly.newPlot('debtEquityChart', charts.debt_equity.data, charts.debt_equity.layout);
+                    console.log('Debt-equity chart created successfully');
+                } else {
+                    document.getElementById('debtEquityChart').innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            자본vs부채 데이터가 없습니다.
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Error loading structure charts:', error);
+                document.getElementById('assetsChart').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        자산구조 차트 로딩 실패: ${error.message}
+                    </div>
+                `;
+                document.getElementById('debtEquityChart').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        자본vs부채 차트 로딩 실패: ${error.message}
+                    </div>
+                                 `;
+             }
+         }
+
+         // 재무비율 차트 로드
+         async function loadRatioCharts(years) {
+             try {
+                 console.log('Loading ratio charts for years:', years);
+                 const response = await fetch(`/api/chart/${corpCode}?type=ratios&years=${years}`);
+                 
+                 if (!response.ok) {
+                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                 }
+                 
+                 const charts = await response.json();
+                 console.log('Received ratio charts data:', charts);
+                 
+                 if (charts.error) {
+                     console.error('Ratio chart error:', charts.error);
+                     const errorMessage = `
+                         <div class="alert alert-warning">
+                             <i class="fas fa-exclamation-triangle"></i>
+                             재무비율 차트 생성 실패: ${charts.error}
+                         </div>
+                     `;
+                     document.getElementById('profitabilityChart').innerHTML = errorMessage;
+                     document.getElementById('stabilityChart').innerHTML = errorMessage;
+                     document.getElementById('growthChart').innerHTML = errorMessage;
+                     document.getElementById('comparisonChart').innerHTML = errorMessage;
+                     return;
+                 }
+
+                                 // 수익성 비율 차트
+                if (charts.profitability) {
+                    console.log('Creating profitability chart...');
+                    document.getElementById('profitabilityChart').innerHTML = ''; // 로딩 메시지 제거
+                    Plotly.newPlot('profitabilityChart', charts.profitability.data, charts.profitability.layout);
+                    console.log('Profitability chart created successfully');
+                } else {
+                     document.getElementById('profitabilityChart').innerHTML = `
+                         <div class="alert alert-info">
+                             <i class="fas fa-info-circle"></i>
+                             수익성 비율 데이터가 없습니다.
+                         </div>
+                     `;
+                 }
+                 
+                                 // 안정성 비율 차트
+                if (charts.stability) {
+                    console.log('Creating stability chart...');
+                    document.getElementById('stabilityChart').innerHTML = ''; // 로딩 메시지 제거
+                    Plotly.newPlot('stabilityChart', charts.stability.data, charts.stability.layout);
+                    console.log('Stability chart created successfully');
+                } else {
+                     document.getElementById('stabilityChart').innerHTML = `
+                         <div class="alert alert-info">
+                             <i class="fas fa-info-circle"></i>
+                             안정성 비율 데이터가 없습니다.
+                         </div>
+                     `;
+                 }
+                 
+                                 // 성장성 비율 차트
+                if (charts.growth) {
+                    console.log('Creating growth chart...');
+                    document.getElementById('growthChart').innerHTML = ''; // 로딩 메시지 제거
+                    Plotly.newPlot('growthChart', charts.growth.data, charts.growth.layout);
+                    console.log('Growth chart created successfully');
+                } else {
+                     document.getElementById('growthChart').innerHTML = `
+                         <div class="alert alert-info">
+                             <i class="fas fa-info-circle"></i>
+                             성장성 비율 데이터가 없습니다.
+                         </div>
+                     `;
+                 }
+                 
+                                 // 종합 비율 비교 차트
+                if (charts.comparison) {
+                    console.log('Creating comparison chart...');
+                    document.getElementById('comparisonChart').innerHTML = ''; // 로딩 메시지 제거
+                    Plotly.newPlot('comparisonChart', charts.comparison.data, charts.comparison.layout);
+                    console.log('Comparison chart created successfully');
+                } else {
+                     document.getElementById('comparisonChart').innerHTML = `
+                         <div class="alert alert-info">
+                             <i class="fas fa-info-circle"></i>
+                             종합 비율 데이터가 없습니다.
+                         </div>
+                     `;
+                 }
+                 
+             } catch (error) {
+                 console.error('Error loading ratio charts:', error);
+                 const errorMessage = `
+                     <div class="alert alert-danger">
+                         <i class="fas fa-exclamation-triangle"></i>
+                         재무비율 차트 로딩 실패: ${error.message}
+                     </div>
+                 `;
+                 document.getElementById('profitabilityChart').innerHTML = errorMessage;
+                 document.getElementById('stabilityChart').innerHTML = errorMessage;
+                 document.getElementById('growthChart').innerHTML = errorMessage;
+                 document.getElementById('comparisonChart').innerHTML = errorMessage;
+             }
+         }
+
+         // 당기vs전기 비교 차트 로드
+         async function loadComparisonCharts(years) {
+             try {
+                 console.log('Loading comparison charts for years:', years);
+                 const response = await fetch(`/api/chart/${corpCode}?type=comparison&years=${years}`);
+                 
+                 if (!response.ok) {
+                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                 }
+                 
+                 const charts = await response.json();
+                 console.log('Received comparison charts data:', charts);
+                 
+                 if (charts.error) {
+                     console.error('Comparison chart error:', charts.error);
+                     const errorMessage = `
+                         <div class="alert alert-warning">
+                             <i class="fas fa-exclamation-triangle"></i>
+                             비교 차트 생성 실패: ${charts.error}
+                         </div>
+                     `;
+                     document.getElementById('incomeComparisonChart').innerHTML = errorMessage;
+                     document.getElementById('balanceComparisonChart').innerHTML = errorMessage;
+                     document.getElementById('growthAnalysisChart').innerHTML = errorMessage;
+                     document.getElementById('comparisonDataTable').innerHTML = errorMessage;
+                     return;
+                 }
+
+                 // 손익계산서 비교 차트
+                 if (charts.income_comparison) {
+                     console.log('Creating income comparison chart...');
+                     document.getElementById('incomeComparisonChart').innerHTML = '';
+                     Plotly.newPlot('incomeComparisonChart', charts.income_comparison.data, charts.income_comparison.layout);
+                     console.log('Income comparison chart created successfully');
+                 } else {
+                     document.getElementById('incomeComparisonChart').innerHTML = `
+                         <div class="alert alert-info">
+                             <i class="fas fa-info-circle"></i>
+                             손익계산서 비교 데이터가 없습니다.
+                         </div>
+                     `;
+                 }
+                 
+                 // 재무상태표 비교 차트
+                 if (charts.balance_comparison) {
+                     console.log('Creating balance comparison chart...');
+                     document.getElementById('balanceComparisonChart').innerHTML = '';
+                     Plotly.newPlot('balanceComparisonChart', charts.balance_comparison.data, charts.balance_comparison.layout);
+                     console.log('Balance comparison chart created successfully');
+                 } else {
+                     document.getElementById('balanceComparisonChart').innerHTML = `
+                         <div class="alert alert-info">
+                             <i class="fas fa-info-circle"></i>
+                             재무상태표 비교 데이터가 없습니다.
+                         </div>
+                     `;
+                 }
+                 
+                 // 증감률 분석 차트
+                 if (charts.growth_analysis) {
+                     console.log('Creating growth analysis chart...');
+                     document.getElementById('growthAnalysisChart').innerHTML = '';
+                     Plotly.newPlot('growthAnalysisChart', charts.growth_analysis.data, charts.growth_analysis.layout);
+                     console.log('Growth analysis chart created successfully');
+                 } else {
+                     document.getElementById('growthAnalysisChart').innerHTML = `
+                         <div class="alert alert-info">
+                             <i class="fas fa-info-circle"></i>
+                             증감률 분석 데이터가 없습니다.
+                         </div>
+                     `;
+                 }
+                 
+                 // 비교 데이터 테이블
+                 if (charts.comparison_data) {
+                     console.log('Creating comparison data table...');
+                     document.getElementById('comparisonDataTable').innerHTML = createComparisonTable(charts.comparison_data);
+                     console.log('Comparison data table created successfully');
+                 } else {
+                     document.getElementById('comparisonDataTable').innerHTML = `
+                         <div class="alert alert-info">
+                             <i class="fas fa-info-circle"></i>
+                             비교 데이터가 없습니다.
+                         </div>
+                     `;
+                 }
+                 
+             } catch (error) {
+                 console.error('Error loading comparison charts:', error);
+                 const errorMessage = `
+                     <div class="alert alert-danger">
+                         <i class="fas fa-exclamation-triangle"></i>
+                         비교 차트 로딩 실패: ${error.message}
+                     </div>
+                 `;
+                 document.getElementById('incomeComparisonChart').innerHTML = errorMessage;
+                 document.getElementById('balanceComparisonChart').innerHTML = errorMessage;
+                 document.getElementById('growthAnalysisChart').innerHTML = errorMessage;
+                 document.getElementById('comparisonDataTable').innerHTML = errorMessage;
+             }
+         }
+
+         // 비교 데이터 테이블 생성
+         function createComparisonTable(data) {
+             let html = `
+                 <div class="table-responsive">
+                     <table class="table table-striped table-hover">
+                         <thead class="table-dark">
+                             <tr>
+                                 <th>항목</th>
+                                 <th>${data[0]?.previous_year}년</th>
+                                 <th>${data[0]?.current_year}년</th>
+                                 <th>증감액</th>
+                                 <th>증감률</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+             `;
+             
+             data.forEach(item => {
+                 const prevAmount = formatKoreanWon(item.previous_amount);
+                 const currAmount = formatKoreanWon(item.current_amount);
+                 const diffAmount = formatKoreanWon(Math.abs(item.diff_amount));
+                 const growthRate = item.growth_rate;
+                 const growthClass = growthRate >= 0 ? 'text-success' : 'text-danger';
+                 const growthIcon = growthRate >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                 const diffSign = item.diff_amount >= 0 ? '+' : '-';
+                 
+                 html += `
+                     <tr>
+                         <td><strong>${item.item}</strong></td>
+                         <td>${prevAmount}</td>
+                         <td>${currAmount}</td>
+                         <td class="${growthClass}">
+                             <i class="fas ${growthIcon}"></i>
+                             ${diffSign}${diffAmount}
+                         </td>
+                         <td class="${growthClass}">
+                             <i class="fas ${growthIcon}"></i>
+                             ${Math.abs(growthRate).toFixed(1)}%
+                         </td>
+                     </tr>
+                 `;
+             });
+             
+             html += `
+                         </tbody>
+                     </table>
+                 </div>
+             `;
+             
+             return html;
+         }
+
+         // AI 분석 로드
+         async function loadAIAnalysis(years) {
+             try {
+                 const yearArray = years.split(',');
+                 const latestYear = yearArray[yearArray.length - 1];
+                 console.log('Loading AI analysis for years:', years);
+                 
+                 // 연도 선택 드롭다운 초기화
+                 initAIAnalysisYearSelect(yearArray, latestYear);
+                 
+                 // AI 재무제표 분석 로드 (기본값: 최신년도)
+                 loadAIFinancialAnalysis(latestYear);
+                 
+                 // AI 비교 분석 로드
+                 loadAIComparisonAnalysis(years);
+                 
+             } catch (error) {
+                 console.error('Error loading AI analysis:', error);
+             }
+         }
+
+         // AI 분석 연도 선택 드롭다운 초기화
+         function initAIAnalysisYearSelect(yearArray, defaultYear) {
+             const select = document.getElementById('aiAnalysisYearSelect');
+             
+             // 기존 옵션 제거 (첫 번째 옵션 제외)
+             select.innerHTML = '<option value="">연도 선택</option>';
+             
+             // 연도 옵션 추가 (최신년도부터 역순)
+             const sortedYears = [...yearArray].sort((a, b) => b - a);
+             sortedYears.forEach(year => {
+                 const option = document.createElement('option');
+                 option.value = year;
+                 option.textContent = `${year}년`;
+                 if (year === defaultYear) {
+                     option.selected = true;
+                 }
+                 select.appendChild(option);
+             });
+
+             // "연도 선택" 옵션 제거하고 기본값 설정
+             if (defaultYear) {
+                 select.querySelector('option[value=""]').remove();
+             }
+             
+             // 기존 이벤트 리스너 제거 후 새로 추가
+             select.removeEventListener('change', handleYearChange);
+             select.addEventListener('change', handleYearChange);
+         }
+
+         // 연도 변경 핸들러 함수
+         function handleYearChange() {
+             const selectedYear = this.value;
+             if (selectedYear) {
+                 console.log('AI 분석 연도 변경:', selectedYear);
+                 loadAIFinancialAnalysis(selectedYear);
+             }
+         }
+
+         // AI 재무제표 분석 로드
+         async function loadAIFinancialAnalysis(year) {
+             if (!year) {
+                 document.getElementById('aiAnalysisContent').innerHTML = `
+                     <div class="alert alert-info">
+                         <i class="fas fa-calendar-alt"></i>
+                         위에서 분석할 연도를 선택해주세요.
+                     </div>
+                 `;
+                 return;
+             }
+
+             // 로딩 스피너 표시
+             document.getElementById('aiAnalysisContent').innerHTML = `
+                 <div class="loading-chart">
+                     <div class="spinner-border text-primary"></div>
+                     <p class="mt-3">${year}년 AI 분석 중...</p>
+                 </div>
+             `;
+
+             try {
+                 const response = await fetch(`/api/ai-analysis/${corpCode}/${year}`);
+                 
+                 if (!response.ok) {
+                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                 }
+                 
+                 const result = await response.json();
+                 console.log('Received AI analysis data:', result);
+                 
+                 if (result.error) {
+                     document.getElementById('aiAnalysisContent').innerHTML = `
+                         <div class="alert alert-warning">
+                             <i class="fas fa-exclamation-triangle"></i>
+                             AI 분석 실패: ${result.error}
+                         </div>
+                     `;
+                     return;
+                 }
+                 
+                 if (!result.ai_enabled) {
+                     document.getElementById('aiAnalysisContent').innerHTML = `
+                         <div class="alert alert-info">
+                             <i class="fas fa-info-circle"></i>
+                             AI 분석 기능을 사용하려면 Gemini API 키를 설정해주세요.
+                             <br><small>.env 파일에 GEMINI_API_KEY를 추가하세요.</small>
+                         </div>
+                     `;
+                     return;
+                 }
+                 
+                 if (result.ai_analysis) {
+                     const formattedAnalysis = formatAIAnalysis(result.ai_analysis);
+                     document.getElementById('aiAnalysisContent').innerHTML = `
+                         <div class="ai-analysis-content">
+                             <div class="mb-3">
+                                 <span class="badge bg-primary">
+                                     <i class="fas fa-robot"></i> ${result.company_name} ${result.year}년 AI 분석
+                                 </span>
+                             </div>
+                             ${formattedAnalysis}
+                         </div>
+                     `;
+                 } else {
+                     document.getElementById('aiAnalysisContent').innerHTML = `
+                         <div class="alert alert-warning">
+                             <i class="fas fa-exclamation-triangle"></i>
+                             AI 분석을 생성할 수 없습니다.
+                         </div>
+                     `;
+                 }
+                 
+             } catch (error) {
+                 console.error('Error loading AI financial analysis:', error);
+                 document.getElementById('aiAnalysisContent').innerHTML = `
+                     <div class="alert alert-danger">
+                         <i class="fas fa-exclamation-triangle"></i>
+                         AI 분석 로딩 실패: ${error.message}
+                     </div>
+                 `;
+             }
+         }
+
+         // AI 비교 분석 로드
+         async function loadAIComparisonAnalysis(years) {
+             try {
+                 const response = await fetch(`/api/ai-comparison/${corpCode}?years=${years}`);
+                 
+                 if (!response.ok) {
+                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                 }
+                 
+                 const result = await response.json();
+                 console.log('Received AI comparison data:', result);
+                 
+                 if (result.error) {
+                     document.getElementById('aiComparisonContent').innerHTML = `
+                         <div class="alert alert-warning">
+                             <i class="fas fa-exclamation-triangle"></i>
+                             AI 비교 분석 실패: ${result.error}
+                         </div>
+                     `;
+                     return;
+                 }
+                 
+                 if (!result.ai_enabled) {
+                     document.getElementById('aiComparisonContent').innerHTML = `
+                         <div class="alert alert-info">
+                             <i class="fas fa-info-circle"></i>
+                             AI 분석 기능을 사용하려면 Gemini API 키를 설정해주세요.
+                         </div>
+                     `;
+                     return;
+                 }
+                 
+                 if (result.ai_analysis) {
+                     const formattedAnalysis = formatAIAnalysis(result.ai_analysis);
+                     document.getElementById('aiComparisonContent').innerHTML = `
+                         <div class="ai-analysis-content">
+                             <div class="mb-3">
+                                 <span class="badge bg-success">
+                                     <i class="fas fa-chart-line"></i> ${result.company_name} ${result.previous_year} vs ${result.current_year} AI 비교분석
+                                 </span>
+                             </div>
+                             ${formattedAnalysis}
+                         </div>
+                     `;
+                 } else {
+                     document.getElementById('aiComparisonContent').innerHTML = `
+                         <div class="alert alert-warning">
+                             <i class="fas fa-exclamation-triangle"></i>
+                             AI 비교 분석을 생성할 수 없습니다.
+                         </div>
+                     `;
+                 }
+                 
+             } catch (error) {
+                 console.error('Error loading AI comparison analysis:', error);
+                 document.getElementById('aiComparisonContent').innerHTML = `
+                     <div class="alert alert-danger">
+                         <i class="fas fa-exclamation-triangle"></i>
+                         AI 비교 분석 로딩 실패: ${error.message}
+                     </div>
+                 `;
+             }
+         }
+
+         // AI 분석 결과 포맷팅
+         function formatAIAnalysis(analysisText) {
+             if (!analysisText) return '';
+             
+             // 마크다운 스타일 헤딩을 HTML로 변환
+             let formatted = analysisText
+                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                 .replace(/^(\d+\.\s*\*\*.*?\*\*)/gm, '<h6 class="mt-3 text-primary">$1</h6>')
+                 .replace(/\n\n/g, '</p><p>')
+                 .replace(/\n/g, '<br>');
+             
+             // 이모지와 함께 섹션 구분
+             formatted = formatted
+                 .replace(/📊/g, '<i class="fas fa-chart-bar text-info"></i>')
+                 .replace(/💰/g, '<i class="fas fa-coins text-warning"></i>')
+                 .replace(/🏦/g, '<i class="fas fa-university text-primary"></i>')
+                 .replace(/📈/g, '<i class="fas fa-chart-line text-success"></i>')
+                 .replace(/⚠️/g, '<i class="fas fa-exclamation-triangle text-warning"></i>')
+                 .replace(/🎯/g, '<i class="fas fa-bullseye text-danger"></i>')
+                 .replace(/📉/g, '<i class="fas fa-chart-line-down text-danger"></i>')
+                 .replace(/🔍/g, '<i class="fas fa-search text-info"></i>');
+             
+             return `<div class="ai-analysis-text">${formatted}</div>`;
+         }
+
+         // 탭 전환 시 차트 리사이즈
+        document.addEventListener('shown.bs.tab', function (event) {
+            setTimeout(() => {
+                Plotly.Plots.resize('revenueChart');
+                Plotly.Plots.resize('profitChart');
+                Plotly.Plots.resize('assetsChart');
+                Plotly.Plots.resize('debtEquityChart');
+                Plotly.Plots.resize('profitabilityChart');
+                Plotly.Plots.resize('stabilityChart');
+                Plotly.Plots.resize('growthChart');
+                Plotly.Plots.resize('comparisonChart');
+                Plotly.Plots.resize('incomeComparisonChart');
+                Plotly.Plots.resize('balanceComparisonChart');
+                Plotly.Plots.resize('growthAnalysisChart');
+            }, 100);
+        });
+    </script>
+</body>
+</html> 
