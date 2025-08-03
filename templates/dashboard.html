@@ -108,13 +108,16 @@
              flex-direction: column;
          }
 
-         .section-header {
+         .section-title {
              text-align: center;
-             padding: 10px;
+             padding: 8px 0;
              font-weight: bold;
-             font-size: 14px;
-             background: rgba(255,255,255,0.2);
-             border-bottom: 1px solid rgba(255,255,255,0.1);
+             font-size: 16px;
+             margin-bottom: 10px;
+         }
+         
+         .section-title i {
+             margin-right: 6px;
          }
 
          .section-content {
@@ -124,6 +127,19 @@
              display: flex;
              flex-direction: column;
              justify-content: center;
+             position: relative;
+         }
+         
+         .ratio-display {
+             position: absolute;
+             bottom: 8px;
+             right: 12px;
+             font-size: 10px;
+             opacity: 0.8;
+             font-weight: bold;
+             background: rgba(0,0,0,0.2);
+             padding: 2px 6px;
+             border-radius: 10px;
          }
 
          .amount-display {
@@ -143,9 +159,9 @@
              font-size: 24px;
          }
 
-         .assets-section .section-header {
-             font-size: 18px;
-             padding: 15px;
+         .assets-section .section-title {
+             font-size: 20px;
+             padding: 12px 0;
          }
 
          .balance-divider {
@@ -166,6 +182,20 @@
              
              .assets-section .amount-display {
                  font-size: 20px;
+             }
+             
+             .section-title {
+                 font-size: 14px;
+             }
+             
+             .assets-section .section-title {
+                 font-size: 16px;
+             }
+             
+             .ratio-display {
+                 font-size: 9px;
+                 bottom: 6px;
+                 right: 8px;
              }
          }
     </style>
@@ -1054,10 +1084,31 @@
                      return;
                  }
                  
-                 // 재무상태표 주요 항목 추출
-                 const assets = data.balance_sheet?.자산총계 || data.balance_sheet?.자산 || 0;
-                 const liabilities = data.balance_sheet?.부채총계 || data.balance_sheet?.부채 || 0;
-                 const equity = data.balance_sheet?.자본총계 || data.balance_sheet?.자본 || assets - liabilities;
+                 // 재무상태표 주요 항목 추출 (디버깅 로그 추가)
+                 console.log('Balance Sheet Data:', data.balance_sheet);
+                 
+                 // 다양한 키 이름으로 데이터 추출 시도
+                 const assets = data.balance_sheet?.자산총계 || data.balance_sheet?.자산 || 
+                               data.balance_sheet?.['자산 총계'] || data.balance_sheet?.['자산총액'] ||
+                               data.balance_sheet?.total_assets || 0;
+                               
+                 const liabilities = data.balance_sheet?.부채총계 || data.balance_sheet?.부채 ||
+                                   data.balance_sheet?.['부채 총계'] || data.balance_sheet?.['부채총액'] ||
+                                   data.balance_sheet?.total_liabilities || 0;
+                                   
+                 const equity = data.balance_sheet?.자본총계 || data.balance_sheet?.자본 ||
+                               data.balance_sheet?.['자본 총계'] || data.balance_sheet?.['자본총액'] ||
+                               data.balance_sheet?.total_equity || (assets - liabilities);
+                               
+                 console.log('Extracted values:', { assets, liabilities, equity });
+                 
+                 // 총계 계산
+                 const total = assets;
+                 
+                 // 비율 계산
+                 const assetsRatio = total > 0 ? ((assets / total) * 100).toFixed(1) : 0;
+                 const liabilitiesRatio = total > 0 ? ((liabilities / total) * 100).toFixed(1) : 0;
+                 const equityRatio = total > 0 ? ((equity / total) * 100).toFixed(1) : 0;
                  
                  // 숫자 포맷팅 함수
                  function formatAmount(amount) {
@@ -1067,19 +1118,19 @@
                      return amount.toLocaleString() + '원';
                  }
                  
-                 // 3분할 박스 HTML 생성
+                 // 3분할 박스 HTML 생성 (개선된 구조)
                  const boxesHTML = `
                      <div class="balance-sheet-container">
                          <div class="single-balance-box">
                              <!-- 왼쪽: 자산 섹션 -->
                              <div class="assets-section">
-                                 <div class="section-header">
-                                     <i class="fas fa-building"></i> 자산
-                                 </div>
                                  <div class="section-content">
-                                     <div class="amount-label">총 자산</div>
+                                     <div class="section-title">
+                                         <i class="fas fa-building"></i> 자산
+                                     </div>
                                      <div class="amount-display">${formatAmount(assets)}</div>
                                      <div class="amount-label">${year}년 기준</div>
+                                     <div class="ratio-display">${assetsRatio}%</div>
                                  </div>
                              </div>
                              
@@ -1090,23 +1141,23 @@
                              <div class="liabilities-equity-section">
                                  <!-- 상단: 부채 섹션 -->
                                  <div class="liability-section">
-                                     <div class="section-header">
-                                         <i class="fas fa-credit-card"></i> 부채
-                                     </div>
                                      <div class="section-content">
-                                         <div class="amount-label">총 부채</div>
+                                         <div class="section-title">
+                                             <i class="fas fa-credit-card"></i> 부채
+                                         </div>
                                          <div class="amount-display">${formatAmount(liabilities)}</div>
+                                         <div class="ratio-display">${liabilitiesRatio}%</div>
                                      </div>
                                  </div>
                                  
                                  <!-- 하단: 자본 섹션 -->
                                  <div class="equity-section">
-                                     <div class="section-header">
-                                         <i class="fas fa-coins"></i> 자본
-                                     </div>
                                      <div class="section-content">
-                                         <div class="amount-label">총 자본</div>
+                                         <div class="section-title">
+                                             <i class="fas fa-coins"></i> 자본
+                                         </div>
                                          <div class="amount-display">${formatAmount(equity)}</div>
+                                         <div class="ratio-display">${equityRatio}%</div>
                                      </div>
                                  </div>
                              </div>
