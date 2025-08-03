@@ -18,9 +18,6 @@ COPY templates/ ./templates/
 COPY static/ ./static/
 COPY corp_codes_sample.json ./
 
-# .env 파일 복사 (선택적)
-COPY .env ./ || echo ".env 파일이 없습니다 - 환경변수 사용"
-
 # 포트 설정
 EXPOSE 8080
 
