@@ -500,7 +500,7 @@
                     </div>
                     <div class="col-lg-6">
                         <div class="chart-container">
-                            <h4 class="mb-3">
+                            <h4 class="mb-3" id="aiComparisonTitle">
                                 <i class="fas fa-chart-line text-success"></i> AI 비교 분석
                             </h4>
                             <div id="aiComparisonContent">
@@ -546,6 +546,10 @@
             console.log('Plotly loaded successfully');
             loadLatestFinancialData();
             updateCharts();
+            
+            // 초기 분석연도에 따른 AI 비교 분석 로드
+            const initialYear = document.getElementById('specificYear').value || '2023';
+            updateAIComparisonWithPreviousYear(initialYear);
         });
 
         // 최신 재무 데이터 로드 (메트릭 표시용)
@@ -615,6 +619,9 @@
             if (document.getElementById('ai-analysis-tab').classList.contains('active')) {
                 loadAIFinancialAnalysis(year);
             }
+            
+            // AI 비교 분석 업데이트 (선택 연도 vs 전년도)
+            await updateAIComparisonWithPreviousYear(year);
         }
 
         // 보고서 유형 코드를 이름으로 변환
@@ -1282,10 +1289,35 @@
                      </div>
                  `;
              }
-         }
+                 }
 
-         // AI 비교 분석 로드
-         async function loadAIComparisonAnalysis(years) {
+        // 선택 연도와 전년도 AI 비교 분석 업데이트
+        async function updateAIComparisonWithPreviousYear(selectedYear) {
+            const currentYear = parseInt(selectedYear);
+            const previousYear = currentYear - 1;
+            
+            console.log(`AI 비교 분석 업데이트: ${previousYear}년 vs ${currentYear}년`);
+            
+            // AI 비교 분석 헤더 업데이트
+            document.getElementById('aiComparisonTitle').innerHTML = `
+                <i class="fas fa-chart-line text-success"></i> AI 비교 분석 
+                <span class="badge bg-success ms-2">${previousYear}년 vs ${currentYear}년</span>
+            `;
+            
+            // AI 비교 분석 섹션을 로딩 상태로 변경
+            document.getElementById('aiComparisonContent').innerHTML = `
+                <div class="loading-chart">
+                    <div class="spinner-border text-success"></div>
+                    <p class="mt-3">${previousYear}년 vs ${currentYear}년 AI 비교 분석 중...</p>
+                </div>
+            `;
+            
+            // 선택 연도와 전년도로 비교 분석 실행
+            await loadAIComparisonAnalysis(`${previousYear},${currentYear}`);
+        }
+
+        // AI 비교 분석 로드
+        async function loadAIComparisonAnalysis(years) {
              try {
                  const response = await fetch(`/api/ai-comparison/${corpCode}?years=${years}`);
                  
