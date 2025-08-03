@@ -34,15 +34,29 @@ class FinancialDataFetcher:
         }
     
     def _load_api_key(self) -> str:
-        """환경 변수에서 API 키 로드"""
+        """환경 변수 또는 .env 파일에서 API 키 로드"""
+        import os
+        
+        # 1순위: 환경 변수에서 DART_API_KEY 확인 (Render 등 배포 환경용)
+        dart_api_key = os.getenv('DART_API_KEY')
+        if dart_api_key:
+            print("✅ 환경 변수에서 DART_API_KEY 로드 완료")
+            return dart_api_key
+        
+        # 2순위: .env 파일에서 DART_API_KEY 확인 (로컬 개발 환경용)
         try:
             with open('.env', 'r', encoding='utf-8') as f:
                 for line in f:
                     if line.strip().startswith('DART_API_KEY='):
-                        return line.strip().split('=', 1)[1]
-            raise ValueError("DART_API_KEY not found in .env file")
+                        api_key = line.strip().split('=', 1)[1]
+                        print("✅ .env 파일에서 DART_API_KEY 로드 완료")
+                        return api_key
+            print("⚠️ .env 파일에 DART_API_KEY가 없습니다")
         except FileNotFoundError:
-            raise ValueError(".env file not found")
+            print("⚠️ .env 파일이 없습니다")
+        
+        # 둘 다 실패한 경우
+        raise ValueError("DART_API_KEY를 찾을 수 없습니다. 환경 변수 또는 .env 파일에 설정해주세요.")
     
     def get_financial_statements(self, 
                                corp_code: str, 
