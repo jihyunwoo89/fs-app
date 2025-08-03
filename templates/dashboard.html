@@ -74,29 +74,30 @@
              flex: 1;
              display: flex;
              flex-direction: column;
+             min-height: 300px;
          }
 
          .current-assets {
-             flex: 1;
-             background: linear-gradient(180deg, #28a745 0%, #20c997 100%);
-             color: white;
              display: flex;
              flex-direction: column;
+             background: linear-gradient(180deg, #28a745 0%, #20c997 100%);
+             color: white;
              border-bottom: 2px solid rgba(255,255,255,0.3);
              transition: all 0.3s ease;
              position: relative;
+             min-height: 60px;
          }
 
 
 
          .non-current-assets {
-             flex: 2;
-             background: linear-gradient(180deg, #155724 0%, #28a745 100%);
-             color: white;
              display: flex;
              flex-direction: column;
+             background: linear-gradient(180deg, #155724 0%, #28a745 100%);
+             color: white;
              transition: all 0.3s ease;
              position: relative;
+             min-height: 60px;
          }
 
 
@@ -105,48 +106,50 @@
              flex: 1;
              display: flex;
              flex-direction: column;
+             min-height: 300px;
          }
 
          .liabilities-section {
              flex: 1;
              display: flex;
              flex-direction: column;
+             min-height: 150px;
          }
 
          .current-liabilities {
-             flex: 1;
-             background: linear-gradient(180deg, #dc3545 0%, #fd7e14 100%);
-             color: white;
              display: flex;
              flex-direction: column;
+             background: linear-gradient(180deg, #dc3545 0%, #fd7e14 100%);
+             color: white;
              border-bottom: 2px solid rgba(255,255,255,0.3);
              transition: all 0.3s ease;
              position: relative;
+             min-height: 60px;
          }
 
 
 
          .non-current-liabilities {
-             flex: 1;
-             background: linear-gradient(180deg, #721c24 0%, #dc3545 100%);
-             color: white;
              display: flex;
              flex-direction: column;
+             background: linear-gradient(180deg, #721c24 0%, #dc3545 100%);
+             color: white;
              border-bottom: 2px solid rgba(255,255,255,0.3);
              transition: all 0.3s ease;
              position: relative;
+             min-height: 60px;
          }
 
 
 
          .equity-section {
-             flex: 1;
-             background: linear-gradient(180deg, #6f42c1 0%, #e83e8c 100%);
-             color: white;
              display: flex;
              flex-direction: column;
+             background: linear-gradient(180deg, #6f42c1 0%, #e83e8c 100%);
+             color: white;
              transition: all 0.3s ease;
              position: relative;
+             min-height: 60px;
          }
 
 
@@ -218,6 +221,81 @@
          .balance-divider {
              width: 2px;
              background: rgba(0,0,0,0.1);
+         }
+         
+         /* 동적 텍스트 크기 조정 클래스들 */
+         .text-size-xs {
+             font-size: 10px !important;
+         }
+         
+         .text-size-sm {
+             font-size: 12px !important;
+         }
+         
+         .text-size-md {
+             font-size: 14px !important;
+         }
+         
+         .text-size-lg {
+             font-size: 16px !important;
+         }
+         
+         .text-size-xl {
+             font-size: 18px !important;
+         }
+         
+         .text-size-xxl {
+             font-size: 20px !important;
+         }
+         
+         /* 아이콘 크기 조정 */
+         .text-size-xs .fas {
+             font-size: 8px !important;
+         }
+         
+         .text-size-sm .fas {
+             font-size: 10px !important;
+         }
+         
+         .text-size-md .fas {
+             font-size: 12px !important;
+         }
+         
+         .text-size-lg .fas {
+             font-size: 14px !important;
+         }
+         
+         .text-size-xl .fas {
+             font-size: 16px !important;
+         }
+         
+         .text-size-xxl .fas {
+             font-size: 18px !important;
+         }
+         
+         /* 금액 표시 크기 조정 */
+         .text-size-xs .amount-display {
+             font-size: 8px !important;
+         }
+         
+         .text-size-sm .amount-display {
+             font-size: 10px !important;
+         }
+         
+         .text-size-md .amount-display {
+             font-size: 12px !important;
+         }
+         
+         .text-size-lg .amount-display {
+             font-size: 14px !important;
+         }
+         
+         .text-size-xl .amount-display {
+             font-size: 16px !important;
+         }
+         
+         .text-size-xxl .amount-display {
+             font-size: 18px !important;
          }
          
          /* 박스 아래 총 금액 표시 */
@@ -1296,6 +1374,23 @@
                      return amount.toLocaleString() + '원';
                  }
                  
+                 // 비율에 따른 텍스트 크기 계산 함수
+                 function getTextSizeClass(ratio) {
+                     const numRatio = parseFloat(ratio);
+                     if (numRatio >= 30) return 'text-size-xxl';
+                     if (numRatio >= 20) return 'text-size-xl';
+                     if (numRatio >= 15) return 'text-size-lg';
+                     if (numRatio >= 10) return 'text-size-md';
+                     if (numRatio >= 5) return 'text-size-sm';
+                     return 'text-size-xs';
+                 }
+                 
+                 // 비율에 따른 flex-grow 값 계산 (최소 높이 보장)
+                 function getFlexGrow(ratio) {
+                     const numRatio = parseFloat(ratio);
+                     return Math.max(numRatio / 10, 0.5); // 최소 0.5의 flex-grow 보장
+                 }
+                 
                  // 5분할 박스 HTML 생성 (유동/비유동 분류)
                  const boxesHTML = `
                      <div class="balance-sheet-container">
@@ -1303,7 +1398,7 @@
                              <!-- 왼쪽: 자산 섹션 -->
                              <div class="assets-section">
                                  <!-- 상단: 유동자산 -->
-                                 <div class="current-assets">
+                                 <div class="current-assets ${getTextSizeClass(currentAssetsRatio)}" style="flex-grow: ${getFlexGrow(currentAssetsRatio)};">
                                      <div class="section-content">
                                          <div class="section-title">
                                              <i class="fas fa-coins"></i> 유동자산
@@ -1314,7 +1409,7 @@
                                  </div>
                                  
                                  <!-- 하단: 비유동자산 -->
-                                 <div class="non-current-assets">
+                                 <div class="non-current-assets ${getTextSizeClass(nonCurrentAssetsRatio)}" style="flex-grow: ${getFlexGrow(nonCurrentAssetsRatio)};">
                                      <div class="section-content">
                                          <div class="section-title">
                                              <i class="fas fa-building"></i> 비유동자산
@@ -1334,7 +1429,7 @@
                                  <!-- 상단: 부채 섹션 -->
                                  <div class="liabilities-section">
                                      <!-- 유동부채 -->
-                                     <div class="current-liabilities">
+                                     <div class="current-liabilities ${getTextSizeClass(currentLiabilitiesRatio)}" style="flex-grow: ${getFlexGrow(currentLiabilitiesRatio)};">
                                          <div class="section-content">
                                              <div class="section-title">
                                                  <i class="fas fa-credit-card"></i> 유동부채
@@ -1345,7 +1440,7 @@
                                      </div>
                                      
                                      <!-- 비유동부채 -->
-                                     <div class="non-current-liabilities">
+                                     <div class="non-current-liabilities ${getTextSizeClass(nonCurrentLiabilitiesRatio)}" style="flex-grow: ${getFlexGrow(nonCurrentLiabilitiesRatio)};">
                                          <div class="section-content">
                                              <div class="section-title">
                                                  <i class="fas fa-file-invoice-dollar"></i> 비유동부채
@@ -1357,7 +1452,7 @@
                                  </div>
                                  
                                  <!-- 하단: 자본 섹션 -->
-                                 <div class="equity-section">
+                                 <div class="equity-section ${getTextSizeClass(equityRatio)}" style="flex-grow: ${getFlexGrow(equityRatio)};">
                                      <div class="section-content">
                                          <div class="section-title">
                                              <i class="fas fa-gem"></i> 자본
