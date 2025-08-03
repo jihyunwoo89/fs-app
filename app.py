@@ -4,8 +4,10 @@
 """
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask_cors import CORS
 import json
 import os
+import time
 import plotly.graph_objs as go
 import plotly.utils
 import pandas as pd
@@ -17,42 +19,98 @@ from ai_analysis import FinancialAnalysisAI
 app = Flask(__name__)
 app.secret_key = 'financial_visualizer_secret_key'
 
+# CORS 설정 추가
+CORS(app, resources={
+    r"/search": {"origins": "*"},
+    r"/api/*": {"origins": "*"},
+    r"/health": {"origins": "*"},
+    r"/init": {"origins": "*"}
+})
+
 # 전역 객체 초기화
 searcher = None
 fetcher = None
 ratio_calculator = None
 ai_analyzer = None
 
-def init_app():
-    """애플리케이션 초기화"""
+def init_app(retry_count=0, max_retries=3):
+    """애플리케이션 초기화 - 재시도 로직 포함"""
     global searcher, fetcher, ratio_calculator, ai_analyzer
+    
     try:
-        print("🚀 애플리케이션 초기화 중...")
+        print(f"🚀 애플리케이션 초기화 중... (시도 {retry_count + 1}/{max_retries + 1})")
+        
+        # 작업 디렉토리 확인
+        print(f"📁 현재 작업 디렉토리: {os.getcwd()}")
+        
+        # 필수 파일 존재 여부 미리 확인
+        corp_files = ['corp_codes.json', 'corp_codes_sample.json']
+        available_file = None
+        for file in corp_files:
+            if os.path.exists(file):
+                file_size = os.path.getsize(file)
+                print(f"📄 {file} 발견 (크기: {file_size:,} bytes)")
+                available_file = file
+                break
+        
+        if not available_file:
+            raise FileNotFoundError("기업코드 파일이 없습니다. corp_codes.json 또는 corp_codes_sample.json이 필요합니다.")
         
         # 1. CompanySearcher 초기화
         print("📚 기업 검색 모듈 초기화 중...")
-        searcher = CompanySearcher()
+        try:
+            searcher = CompanySearcher()
+            print("✅ 기업 검색 모듈 초기화 성공")
+        except Exception as e:
+            print(f"❌ 기업 검색 모듈 초기화 실패: {e}")
+            raise
         
         # 2. FinancialDataFetcher 초기화
         print("💰 재무데이터 모듈 초기화 중...")
-        fetcher = FinancialDataFetcher()
+        try:
+            fetcher = FinancialDataFetcher()
+            print("✅ 재무데이터 모듈 초기화 성공")
+        except Exception as e:
+            print(f"❌ 재무데이터 모듈 초기화 실패: {e}")
+            raise
         
         # 3. FinancialRatioCalculator 초기화
         print("📊 재무비율 계산 모듈 초기화 중...")
-        ratio_calculator = FinancialRatioCalculator()
+        try:
+            ratio_calculator = FinancialRatioCalculator()
+            print("✅ 재무비율 계산 모듈 초기화 성공")
+        except Exception as e:
+            print(f"❌ 재무비율 계산 모듈 초기화 실패: {e}")
+            raise
         
         # 4. AI 분석 모듈 초기화
         print("🤖 AI 분석 모듈 초기화 중...")
-        ai_analyzer = FinancialAnalysisAI()
+        try:
+            ai_analyzer = FinancialAnalysisAI()
+            print("✅ AI 분석 모듈 초기화 성공")
+        except Exception as e:
+            print(f"❌ AI 분석 모듈 초기화 실패: {e}")
+            # AI 모듈 실패는 치명적이지 않음
+            ai_analyzer = None
+            print("⚠️ AI 분석 기능 없이 계속 진행합니다.")
         
         print("✅ 모든 모듈 초기화 완료!")
         return True
+        
     except Exception as e:
-        print(f"❌ 초기화 실패: {e}")
+        print(f"❌ 초기화 실패 (시도 {retry_count + 1}/{max_retries + 1}): {e}")
         print(f"❌ 상세 에러: {type(e).__name__}: {str(e)}")
         import traceback
         traceback.print_exc()
-        return False
+        
+        # 재시도 로직
+        if retry_count < max_retries:
+            print(f"⏰ {2 ** retry_count}초 후 재시도...")
+            time.sleep(2 ** retry_count)  # 지수적 백오프
+            return init_app(retry_count + 1, max_retries)
+        else:
+            print("❌ 최대 재시도 횟수 초과. 초기화 포기.")
+            return False
 
 @app.route('/health')
 def health_check():
@@ -106,20 +164,39 @@ def index():
 
 @app.route('/search')
 def search_companies():
-    """회사 검색 API"""
-    query = request.args.get('q', '').strip()
-    if not query:
-        return jsonify({'companies': []})
-    
-    # 초기화 상태 확인
-    if searcher is None:
-        return jsonify({'error': '애플리케이션 초기화가 완료되지 않았습니다. 잠시 후 다시 시도해주세요.'})
-    
+    """회사 검색 API - 강화된 오류 처리"""
     try:
+        query = request.args.get('q', '').strip()
+        if not query:
+            return jsonify({'companies': [], 'status': 'empty_query'})
+        
+        # 초기화 상태 확인
+        if searcher is None:
+            # 자동 재초기화 시도
+            print("🔄 검색 요청 시 자동 재초기화 시도...")
+            init_success = init_app()
+            if not init_success or searcher is None:
+                return jsonify({
+                    'error': '애플리케이션 초기화가 완료되지 않았습니다. 잠시 후 다시 시도해주세요.',
+                    'status': 'initialization_failed',
+                    'suggestion': '/health 엔드포인트에서 상태를 확인하거나 /init 엔드포인트로 수동 초기화를 시도해보세요.'
+                }), 503
+        
+        print(f"🔍 회사 검색 요청: '{query}'")
+        
         # 상장기업 우선 검색
-        listed_results = searcher.search_listed_companies(query, limit=5)
+        try:
+            listed_results = searcher.search_listed_companies(query, limit=5)
+        except Exception as e:
+            print(f"⚠️ 상장기업 검색 실패: {e}")
+            listed_results = []
+        
         # 전체 기업 검색
-        all_results = searcher.search_by_name(query, limit=10)
+        try:
+            all_results = searcher.search_by_name(query, limit=10)
+        except Exception as e:
+            print(f"⚠️ 전체 기업 검색 실패: {e}")
+            all_results = []
         
         # 중복 제거하면서 상장기업을 앞에 배치
         seen = set()
@@ -133,9 +210,25 @@ def search_companies():
             if len(combined_results) >= 10:
                 break
         
-        return jsonify({'companies': combined_results})
+        print(f"✅ 검색 결과: {len(combined_results)}개 기업 발견")
+        
+        return jsonify({
+            'companies': combined_results,
+            'status': 'success',
+            'query': query,
+            'total_found': len(combined_results)
+        })
+        
     except Exception as e:
-        return jsonify({'error': str(e)})
+        print(f"❌ 검색 중 예외 발생: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({
+            'error': f'검색 중 오류가 발생했습니다: {str(e)}',
+            'status': 'error',
+            'error_type': type(e).__name__
+        }), 500
 
 @app.route('/financial/<corp_code>')
 def financial_dashboard(corp_code):
@@ -1130,10 +1223,26 @@ def create_structure_charts(corp_code, year):
     return charts
 
 if __name__ == '__main__':
-    if init_app():
-        port = int(os.environ.get('PORT', 8080))
+    # 포트 설정
+    port = int(os.environ.get('PORT', 8080))
+    
+    # 초기화 시도
+    init_success = init_app()
+    
+    if init_success:
         print("🌐 웹 서버 시작!")
         print(f"📍 http://localhost:{port} 에서 접속하세요")
-        app.run(debug=False, host='0.0.0.0', port=port)
     else:
-        print("❌ 애플리케이션 초기화 실패") 
+        print("⚠️ 초기화 실패했지만 서버를 시작합니다. /health 및 /init 엔드포인트를 통해 복구를 시도할 수 있습니다.")
+        print("🌐 제한된 모드로 웹 서버 시작!")
+        print(f"📍 http://localhost:{port} 에서 접속하세요")
+        print("🔧 복구를 위해 {}/health 또는 {}/init을 방문하세요".format(
+            f"http://localhost:{port}", f"http://localhost:{port}"
+        ))
+    
+    # 서버 시작 (초기화 성공 여부와 관계없이)
+    try:
+        app.run(debug=False, host='0.0.0.0', port=port)
+    except Exception as e:
+        print(f"❌ 서버 시작 실패: {e}")
+        exit(1) 
