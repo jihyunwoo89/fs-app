@@ -28,14 +28,30 @@ def init_app():
     global searcher, fetcher, ratio_calculator, ai_analyzer
     try:
         print("🚀 애플리케이션 초기화 중...")
+        
+        # 1. CompanySearcher 초기화
+        print("📚 기업 검색 모듈 초기화 중...")
         searcher = CompanySearcher()
+        
+        # 2. FinancialDataFetcher 초기화
+        print("💰 재무데이터 모듈 초기화 중...")
         fetcher = FinancialDataFetcher()
+        
+        # 3. FinancialRatioCalculator 초기화
+        print("📊 재무비율 계산 모듈 초기화 중...")
         ratio_calculator = FinancialRatioCalculator()
+        
+        # 4. AI 분석 모듈 초기화
+        print("🤖 AI 분석 모듈 초기화 중...")
         ai_analyzer = FinancialAnalysisAI()
-        print("✅ 초기화 완료!")
+        
+        print("✅ 모든 모듈 초기화 완료!")
         return True
     except Exception as e:
         print(f"❌ 초기화 실패: {e}")
+        print(f"❌ 상세 에러: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return False
 
 @app.route('/')
@@ -49,6 +65,10 @@ def search_companies():
     query = request.args.get('q', '').strip()
     if not query:
         return jsonify({'companies': []})
+    
+    # 초기화 상태 확인
+    if searcher is None:
+        return jsonify({'error': '애플리케이션 초기화가 완료되지 않았습니다. 잠시 후 다시 시도해주세요.'})
     
     try:
         # 상장기업 우선 검색
@@ -75,6 +95,9 @@ def search_companies():
 @app.route('/financial/<corp_code>')
 def financial_dashboard(corp_code):
     """기업별 재무제표 대시보드"""
+    if searcher is None:
+        return "애플리케이션 초기화가 완료되지 않았습니다. 잠시 후 다시 시도해주세요.", 503
+        
     try:
         # 기업 정보 조회
         company = searcher.get_by_corp_code(corp_code)

@@ -10,12 +10,28 @@ from typing import List, Dict, Optional
 class CompanySearcher:
     def __init__(self, json_file: str = "corp_codes.json"):
         """JSON 파일을 로드하여 검색 준비"""
-        with open(json_file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        import os
         
-        self.companies = data['companies']
-        self.total_count = data['metadata']['total_count']
-        print(f"✅ {self.total_count:,}개 기업 데이터 로드 완료")
+        # 파일 존재 여부 확인
+        if not os.path.exists(json_file):
+            # 메인 파일이 없으면 샘플 파일 사용
+            sample_file = "corp_codes_sample.json"
+            if os.path.exists(sample_file):
+                print(f"⚠️ {json_file} 파일이 없어 {sample_file}을 사용합니다.")
+                json_file = sample_file
+            else:
+                raise FileNotFoundError(f"기업코드 파일을 찾을 수 없습니다: {json_file}, {sample_file}")
+        
+        try:
+            with open(json_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            self.companies = data['companies']
+            self.total_count = data['metadata']['total_count']
+            print(f"✅ {self.total_count:,}개 기업 데이터 로드 완료 (파일: {json_file})")
+        except Exception as e:
+            print(f"❌ 기업코드 파일 로드 실패: {e}")
+            raise
     
     def search_by_name(self, company_name: str, limit: int = 10) -> List[Dict]:
         """
