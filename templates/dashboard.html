@@ -1084,21 +1084,19 @@
                      return;
                  }
                  
-                 // 재무상태표 주요 항목 추출 (디버깅 로그 추가)
+                 // 재무상태표 주요 항목 추출 (올바른 데이터 구조 사용)
                  console.log('Balance Sheet Data:', data.balance_sheet);
                  
-                 // 다양한 키 이름으로 데이터 추출 시도
-                 const assets = data.balance_sheet?.자산총계 || data.balance_sheet?.자산 || 
-                               data.balance_sheet?.['자산 총계'] || data.balance_sheet?.['자산총액'] ||
-                               data.balance_sheet?.total_assets || 0;
+                 // 실제 API 응답 구조에 맞게 데이터 추출
+                 const assets = data.balance_sheet?.assets?.자산총계?.current_year?.amount || 
+                               data.balance_sheet?.assets?.자산?.current_year?.amount || 0;
                                
-                 const liabilities = data.balance_sheet?.부채총계 || data.balance_sheet?.부채 ||
-                                   data.balance_sheet?.['부채 총계'] || data.balance_sheet?.['부채총액'] ||
-                                   data.balance_sheet?.total_liabilities || 0;
+                 const liabilities = data.balance_sheet?.liabilities?.부채총계?.current_year?.amount || 
+                                   data.balance_sheet?.liabilities?.부채?.current_year?.amount || 0;
                                    
-                 const equity = data.balance_sheet?.자본총계 || data.balance_sheet?.자본 ||
-                               data.balance_sheet?.['자본 총계'] || data.balance_sheet?.['자본총액'] ||
-                               data.balance_sheet?.total_equity || (assets - liabilities);
+                 const equity = data.balance_sheet?.equity?.자본총계?.current_year?.amount || 
+                               data.balance_sheet?.equity?.자본?.current_year?.amount || 
+                               (assets - liabilities);
                                
                  console.log('Extracted values:', { assets, liabilities, equity });
                  
