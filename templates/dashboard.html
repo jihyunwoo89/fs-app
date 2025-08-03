@@ -1340,11 +1340,83 @@
                                data.balance_sheet?.assets?.자산?.current_year?.amount || 
                                (currentAssets + nonCurrentAssets);
                                
-                 const currentLiabilities = data.balance_sheet?.liabilities?.유동부채?.current_year?.amount || 0;
-                 const nonCurrentLiabilities = data.balance_sheet?.liabilities?.비유동부채?.current_year?.amount || 0;
-                 const liabilities = data.balance_sheet?.liabilities?.부채총계?.current_year?.amount || 
+                 // 부채 데이터 추출 - 다양한 키 이름 시도 (let으로 선언하여 재할당 가능)
+                 let currentLiabilities = data.balance_sheet?.liabilities?.유동부채?.current_year?.amount || 
+                                          data.balance_sheet?.liabilities?.['유동부채']?.current_year?.amount ||
+                                          data.balance_sheet?.liabilities?.['단기부채']?.current_year?.amount ||
+                                          data.balance_sheet?.liabilities?.['1년내만기부채']?.current_year?.amount ||
+                                          0;
+                                          
+                 let nonCurrentLiabilities = data.balance_sheet?.liabilities?.비유동부채?.current_year?.amount || 
+                                             data.balance_sheet?.liabilities?.['비유동부채']?.current_year?.amount ||
+                                             data.balance_sheet?.liabilities?.['장기부채']?.current_year?.amount ||
+                                             data.balance_sheet?.liabilities?.['비유동부채총계']?.current_year?.amount ||
+                                             0;
+                                             
+                 let liabilities = data.balance_sheet?.liabilities?.부채총계?.current_year?.amount || 
                                    data.balance_sheet?.liabilities?.부채?.current_year?.amount || 
+                                   data.balance_sheet?.liabilities?.['부채 총계']?.current_year?.amount ||
+                                   data.balance_sheet?.liabilities?.['부채총액']?.current_year?.amount ||
+                                   data.balance_sheet?.liabilities?.['total_liabilities']?.current_year?.amount ||
                                    (currentLiabilities + nonCurrentLiabilities);
+                                   
+                 // 만약 기본 구조에서 찾지 못했다면, 전체 데이터에서 검색
+                 if (currentLiabilities === 0) {
+                     // 다른 구조에서 유동부채 찾기
+                     const balanceSheetData = data.balance_sheet;
+                     for (const [key, value] of Object.entries(balanceSheetData || {})) {
+                         if (typeof value === 'object' && value !== null) {
+                             for (const [subKey, subValue] of Object.entries(value)) {
+                                 if (subKey.includes('유동부채') || subKey.includes('단기부채')) {
+                                     const amount = subValue?.current_year?.amount || subValue?.amount;
+                                     if (amount && amount > 0) {
+                                         currentLiabilities = amount;
+                                         console.log('Found currentLiabilities in:', key, subKey, amount);
+                                         break;
+                                     }
+                                 }
+                             }
+                         }
+                         if (currentLiabilities > 0) break;
+                     }
+                 }
+                 
+                 if (nonCurrentLiabilities === 0) {
+                     // 다른 구조에서 비유동부채 찾기
+                     const balanceSheetData = data.balance_sheet;
+                     for (const [key, value] of Object.entries(balanceSheetData || {})) {
+                         if (typeof value === 'object' && value !== null) {
+                             for (const [subKey, subValue] of Object.entries(value)) {
+                                 if (subKey.includes('비유동부채') || subKey.includes('장기부채') || subKey.includes('비유동')) {
+                                     const amount = subValue?.current_year?.amount || subValue?.amount;
+                                     if (amount && amount > 0) {
+                                         nonCurrentLiabilities = amount;
+                                         console.log('Found nonCurrentLiabilities in:', key, subKey, amount);
+                                         break;
+                                     }
+                                 }
+                             }
+                         }
+                         if (nonCurrentLiabilities > 0) break;
+                     }
+                 }
+                 
+                 // 총 부채 재계산 (개별 항목을 찾았다면)
+                 if (currentLiabilities > 0 || nonCurrentLiabilities > 0) {
+                     const calculatedLiabilities = currentLiabilities + nonCurrentLiabilities;
+                     if (calculatedLiabilities > liabilities) {
+                         liabilities = calculatedLiabilities;
+                     }
+                 }
+                 
+                 // 부채 데이터 디버그 로그
+                 console.log('Liabilities Debug:', {
+                     liabilities_structure: data.balance_sheet?.liabilities,
+                     currentLiabilities,
+                     nonCurrentLiabilities,
+                     totalLiabilities: liabilities,
+                     full_balance_sheet: data.balance_sheet
+                 });
                                    
                  const equity = data.balance_sheet?.equity?.자본총계?.current_year?.amount || 
                                data.balance_sheet?.equity?.자본?.current_year?.amount || 
