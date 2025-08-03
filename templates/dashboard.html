@@ -63,26 +63,48 @@
              position: relative;
              border-radius: 8px;
              box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-             transition: all 0.3s ease;
              display: flex;
-             width: 600px;
-             height: 300px;
+             width: 700px;
+             height: 350px;
              background: white;
              overflow: hidden;
          }
 
-         .single-balance-box:hover {
-             transform: translateY(-3px);
-             box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+         .assets-section {
+             flex: 1;
+             display: flex;
+             flex-direction: column;
          }
 
-         .assets-section {
+         .current-assets {
              flex: 1;
              background: linear-gradient(180deg, #28a745 0%, #20c997 100%);
              color: white;
              display: flex;
              flex-direction: column;
+             border-bottom: 2px solid rgba(255,255,255,0.3);
+             transition: all 0.3s ease;
              position: relative;
+         }
+
+         .current-assets:hover {
+             transform: scale(1.02);
+             box-shadow: inset 0 0 20px rgba(255,255,255,0.2);
+         }
+
+         .non-current-assets {
+             flex: 2;
+             background: linear-gradient(180deg, #155724 0%, #28a745 100%);
+             color: white;
+             display: flex;
+             flex-direction: column;
+             transition: all 0.3s ease;
+             position: relative;
+         }
+
+         .non-current-assets:hover {
+             transform: scale(1.02);
+             box-shadow: inset 0 0 20px rgba(255,255,255,0.2);
          }
 
          .liabilities-equity-section {
@@ -91,13 +113,42 @@
              flex-direction: column;
          }
 
-         .liability-section {
+         .liabilities-section {
+             flex: 1;
+             display: flex;
+             flex-direction: column;
+         }
+
+         .current-liabilities {
              flex: 1;
              background: linear-gradient(180deg, #dc3545 0%, #fd7e14 100%);
              color: white;
              display: flex;
              flex-direction: column;
              border-bottom: 2px solid rgba(255,255,255,0.3);
+             transition: all 0.3s ease;
+             position: relative;
+         }
+
+         .current-liabilities:hover {
+             transform: scale(1.02);
+             box-shadow: inset 0 0 20px rgba(255,255,255,0.2);
+         }
+
+         .non-current-liabilities {
+             flex: 1;
+             background: linear-gradient(180deg, #721c24 0%, #dc3545 100%);
+             color: white;
+             display: flex;
+             flex-direction: column;
+             border-bottom: 2px solid rgba(255,255,255,0.3);
+             transition: all 0.3s ease;
+             position: relative;
+         }
+
+         .non-current-liabilities:hover {
+             transform: scale(1.02);
+             box-shadow: inset 0 0 20px rgba(255,255,255,0.2);
          }
 
          .equity-section {
@@ -106,6 +157,13 @@
              color: white;
              display: flex;
              flex-direction: column;
+             transition: all 0.3s ease;
+             position: relative;
+         }
+
+         .equity-section:hover {
+             transform: scale(1.02);
+             box-shadow: inset 0 0 20px rgba(255,255,255,0.2);
          }
 
          .section-title {
@@ -172,30 +230,52 @@
          @media (max-width: 768px) {
              .single-balance-box {
                  width: 100%;
-                 max-width: 500px;
-                 height: 250px;
+                 max-width: 600px;
+                 height: 280px;
+                 flex-direction: column;
+             }
+             
+             .assets-section {
+                 flex-direction: row;
+                 flex: 1;
+             }
+             
+             .liabilities-equity-section {
+                 flex-direction: row;
+                 flex: 1;
+             }
+             
+             .balance-divider {
+                 width: 100%;
+                 height: 2px;
+                 background: rgba(0,0,0,0.1);
              }
              
              .amount-display {
-                 font-size: 16px;
-             }
-             
-             .assets-section .amount-display {
-                 font-size: 20px;
-             }
-             
-             .section-title {
                  font-size: 14px;
              }
              
-             .assets-section .section-title {
+             .non-current-assets .amount-display {
                  font-size: 16px;
              }
              
+             .section-title {
+                 font-size: 12px;
+                 padding: 4px 0;
+             }
+             
+             .non-current-assets .section-title {
+                 font-size: 14px;
+             }
+             
              .ratio-display {
-                 font-size: 9px;
-                 bottom: 6px;
-                 right: 8px;
+                 font-size: 8px;
+                 bottom: 4px;
+                 right: 6px;
+             }
+             
+             .section-content {
+                 padding: 8px;
              }
          }
     </style>
@@ -1087,25 +1167,37 @@
                  // 재무상태표 주요 항목 추출 (올바른 데이터 구조 사용)
                  console.log('Balance Sheet Data:', data.balance_sheet);
                  
-                 // 실제 API 응답 구조에 맞게 데이터 추출
+                 // 실제 API 응답 구조에 맞게 세분화된 데이터 추출
+                 const currentAssets = data.balance_sheet?.assets?.유동자산?.current_year?.amount || 0;
+                 const nonCurrentAssets = data.balance_sheet?.assets?.비유동자산?.current_year?.amount || 0;
                  const assets = data.balance_sheet?.assets?.자산총계?.current_year?.amount || 
-                               data.balance_sheet?.assets?.자산?.current_year?.amount || 0;
+                               data.balance_sheet?.assets?.자산?.current_year?.amount || 
+                               (currentAssets + nonCurrentAssets);
                                
+                 const currentLiabilities = data.balance_sheet?.liabilities?.유동부채?.current_year?.amount || 0;
+                 const nonCurrentLiabilities = data.balance_sheet?.liabilities?.비유동부채?.current_year?.amount || 0;
                  const liabilities = data.balance_sheet?.liabilities?.부채총계?.current_year?.amount || 
-                                   data.balance_sheet?.liabilities?.부채?.current_year?.amount || 0;
+                                   data.balance_sheet?.liabilities?.부채?.current_year?.amount || 
+                                   (currentLiabilities + nonCurrentLiabilities);
                                    
                  const equity = data.balance_sheet?.equity?.자본총계?.current_year?.amount || 
                                data.balance_sheet?.equity?.자본?.current_year?.amount || 
                                (assets - liabilities);
                                
-                 console.log('Extracted values:', { assets, liabilities, equity });
+                 console.log('Extracted values:', { 
+                     currentAssets, nonCurrentAssets, assets,
+                     currentLiabilities, nonCurrentLiabilities, liabilities, 
+                     equity 
+                 });
                  
                  // 총계 계산
                  const total = assets;
                  
-                 // 비율 계산
-                 const assetsRatio = total > 0 ? ((assets / total) * 100).toFixed(1) : 0;
-                 const liabilitiesRatio = total > 0 ? ((liabilities / total) * 100).toFixed(1) : 0;
+                 // 비율 계산 (자산 총계 대비)
+                 const currentAssetsRatio = total > 0 ? ((currentAssets / total) * 100).toFixed(1) : 0;
+                 const nonCurrentAssetsRatio = total > 0 ? ((nonCurrentAssets / total) * 100).toFixed(1) : 0;
+                 const currentLiabilitiesRatio = total > 0 ? ((currentLiabilities / total) * 100).toFixed(1) : 0;
+                 const nonCurrentLiabilitiesRatio = total > 0 ? ((nonCurrentLiabilities / total) * 100).toFixed(1) : 0;
                  const equityRatio = total > 0 ? ((equity / total) * 100).toFixed(1) : 0;
                  
                  // 숫자 포맷팅 함수
@@ -1116,19 +1208,33 @@
                      return amount.toLocaleString() + '원';
                  }
                  
-                 // 3분할 박스 HTML 생성 (개선된 구조)
+                 // 5분할 박스 HTML 생성 (유동/비유동 분류)
                  const boxesHTML = `
                      <div class="balance-sheet-container">
                          <div class="single-balance-box">
                              <!-- 왼쪽: 자산 섹션 -->
                              <div class="assets-section">
-                                 <div class="section-content">
-                                     <div class="section-title">
-                                         <i class="fas fa-building"></i> 자산
+                                 <!-- 상단: 유동자산 -->
+                                 <div class="current-assets">
+                                     <div class="section-content">
+                                         <div class="section-title">
+                                             <i class="fas fa-coins"></i> 유동자산
+                                         </div>
+                                         <div class="amount-display">${formatAmount(currentAssets)}</div>
+                                         <div class="ratio-display">${currentAssetsRatio}%</div>
                                      </div>
-                                     <div class="amount-display">${formatAmount(assets)}</div>
-                                     <div class="amount-label">${year}년 기준</div>
-                                     <div class="ratio-display">${assetsRatio}%</div>
+                                 </div>
+                                 
+                                 <!-- 하단: 비유동자산 -->
+                                 <div class="non-current-assets">
+                                     <div class="section-content">
+                                         <div class="section-title">
+                                             <i class="fas fa-building"></i> 비유동자산
+                                         </div>
+                                         <div class="amount-display">${formatAmount(nonCurrentAssets)}</div>
+                                         <div class="amount-label">${year}년 기준</div>
+                                         <div class="ratio-display">${nonCurrentAssetsRatio}%</div>
+                                     </div>
                                  </div>
                              </div>
                              
@@ -1138,13 +1244,27 @@
                              <!-- 오른쪽: 부채 + 자본 섹션 -->
                              <div class="liabilities-equity-section">
                                  <!-- 상단: 부채 섹션 -->
-                                 <div class="liability-section">
-                                     <div class="section-content">
-                                         <div class="section-title">
-                                             <i class="fas fa-credit-card"></i> 부채
+                                 <div class="liabilities-section">
+                                     <!-- 유동부채 -->
+                                     <div class="current-liabilities">
+                                         <div class="section-content">
+                                             <div class="section-title">
+                                                 <i class="fas fa-credit-card"></i> 유동부채
+                                             </div>
+                                             <div class="amount-display">${formatAmount(currentLiabilities)}</div>
+                                             <div class="ratio-display">${currentLiabilitiesRatio}%</div>
                                          </div>
-                                         <div class="amount-display">${formatAmount(liabilities)}</div>
-                                         <div class="ratio-display">${liabilitiesRatio}%</div>
+                                     </div>
+                                     
+                                     <!-- 비유동부채 -->
+                                     <div class="non-current-liabilities">
+                                         <div class="section-content">
+                                             <div class="section-title">
+                                                 <i class="fas fa-file-invoice-dollar"></i> 비유동부채
+                                             </div>
+                                             <div class="amount-display">${formatAmount(nonCurrentLiabilities)}</div>
+                                             <div class="ratio-display">${nonCurrentLiabilitiesRatio}%</div>
+                                         </div>
                                      </div>
                                  </div>
                                  
@@ -1152,7 +1272,7 @@
                                  <div class="equity-section">
                                      <div class="section-content">
                                          <div class="section-title">
-                                             <i class="fas fa-coins"></i> 자본
+                                             <i class="fas fa-gem"></i> 자본
                                          </div>
                                          <div class="amount-display">${formatAmount(equity)}</div>
                                          <div class="ratio-display">${equityRatio}%</div>
