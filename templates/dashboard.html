@@ -198,22 +198,45 @@
     </div>
 
     <div class="container">
-        <!-- Year Selector -->
+        <!-- Year and Report Type Selector -->
         <div class="year-selector">
             <div class="row align-items-center">
-                <div class="col-md-6">
+                <div class="col-md-3">
                     <h5 class="mb-0">
-                        <i class="fas fa-calendar-alt"></i> 조회 연도 선택
+                        <i class="fas fa-calendar-alt"></i> 조회 조건 선택
                     </h5>
                 </div>
-                <div class="col-md-6">
-                    <div class="d-flex justify-content-end align-items-center">
-                        <label for="yearRange" class="form-label me-3 mb-0">연도 범위:</label>
-                        <select id="yearRange" class="form-select" style="width: auto;" onchange="updateCharts()">
-                            <option value="2021,2022,2023">2021-2023 (3년)</option>
-                            <option value="2020,2021,2022,2023">2020-2023 (4년)</option>
-                            <option value="2019,2020,2021,2022,2023">2019-2023 (5년)</option>
-                        </select>
+                <div class="col-md-9">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="specificYear" class="form-label mb-1">📅 사업연도</label>
+                            <select id="specificYear" class="form-select" onchange="updateSpecificData()">
+                                <option value="">연도 선택</option>
+                                <option value="2024">2024년</option>
+                                <option value="2023" selected>2023년</option>
+                                <option value="2022">2022년</option>
+                                <option value="2021">2021년</option>
+                                <option value="2020">2020년</option>
+                                <option value="2019">2019년</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="reportType" class="form-label mb-1">📊 보고서 유형</label>
+                            <select id="reportType" class="form-select" onchange="updateSpecificData()">
+                                <option value="11011" selected>사업보고서 (연간)</option>
+                                <option value="11014">3분기보고서</option>
+                                <option value="11012">반기보고서</option>
+                                <option value="11013">1분기보고서</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="yearRange" class="form-label mb-1">📈 추세분석 범위</label>
+                            <select id="yearRange" class="form-select" onchange="updateCharts()">
+                                <option value="2021,2022,2023">2021-2023 (3년)</option>
+                                <option value="2020,2021,2022,2023">2020-2023 (4년)</option>
+                                <option value="2019,2020,2021,2022,2023">2019-2023 (5년)</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -527,15 +550,18 @@
 
         // 최신 재무 데이터 로드 (메트릭 표시용)
         async function loadLatestFinancialData() {
+            const year = document.getElementById('specificYear').value || '2023';
+            const reportType = document.getElementById('reportType').value || '11011';
+            
             try {
-                const response = await fetch(`/api/financial/${corpCode}/2023`);
+                const response = await fetch(`/api/financial/${corpCode}/${year}?reprt_code=${reportType}`);
                 const data = await response.json();
                 
                 if (data.error) {
                     document.getElementById('metricsSection').innerHTML = `
                         <div class="alert alert-warning">
                             <i class="fas fa-exclamation-triangle"></i>
-                            2023년 데이터를 불러올 수 없습니다. 다른 연도를 시도해보세요.
+                            ${year}년 데이터를 불러올 수 없습니다. 다른 연도나 보고서 유형을 시도해보세요.
                         </div>
                     `;
                     return;
@@ -553,6 +579,53 @@
                     </div>
                 `;
             }
+        }
+
+        // 개별 사업연도/보고서 유형 변경시 데이터 업데이트
+        async function updateSpecificData() {
+            const year = document.getElementById('specificYear').value;
+            const reportType = document.getElementById('reportType').value;
+            
+            if (!year) {
+                document.getElementById('metricsSection').innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-calendar-alt"></i>
+                        사업연도를 선택해주세요.
+                    </div>
+                `;
+                return;
+            }
+            
+            console.log(`사업연도: ${year}, 보고서 유형: ${reportType}로 데이터 업데이트 중...`);
+            
+            // 메트릭 섹션 로딩 상태로 변경
+            document.getElementById('metricsSection').innerHTML = `
+                <div class="loading-chart">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">데이터 로딩 중...</span>
+                    </div>
+                    <p class="mt-3">${year}년 ${getReportTypeName(reportType)} 데이터를 불러오는 중...</p>
+                </div>
+            `;
+            
+            // 메트릭 데이터 새로 로드
+            await loadLatestFinancialData();
+            
+            // AI 분석도 새 연도로 업데이트
+            if (document.getElementById('ai-analysis-tab').classList.contains('active')) {
+                loadAIFinancialAnalysis(year);
+            }
+        }
+
+        // 보고서 유형 코드를 이름으로 변환
+        function getReportTypeName(reportCode) {
+            const reportNames = {
+                '11011': '사업보고서',
+                '11012': '반기보고서', 
+                '11013': '1분기보고서',
+                '11014': '3분기보고서'
+            };
+            return reportNames[reportCode] || '보고서';
         }
 
         // 주요 지표 표시

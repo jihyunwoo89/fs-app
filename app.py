@@ -159,20 +159,47 @@ def financial_dashboard(corp_code):
 def get_financial_data(corp_code, year):
     """재무데이터 API"""
     try:
-        raw_data = fetcher.get_financial_statements(corp_code, str(year))
+        # 보고서 유형 파라미터 받기 (기본값: 사업보고서)
+        reprt_code = request.args.get('reprt_code', '11011')
+        
+        print(f"🔍 재무데이터 조회 요청: {corp_code}, {year}년, 보고서코드: {reprt_code}")
+        
+        raw_data = fetcher.get_financial_statements(corp_code, str(year), reprt_code)
         if not raw_data:
             return jsonify({'error': '데이터를 찾을 수 없습니다.'}), 404
         
         parsed_data = fetcher.parse_financial_data(raw_data)
+        
+        # 응답에 요청 정보 포함
+        parsed_data['request_info'] = {
+            'corp_code': corp_code,
+            'year': year,
+            'reprt_code': reprt_code,
+            'report_name': get_report_name(reprt_code)
+        }
+        
         return jsonify(parsed_data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+def get_report_name(reprt_code):
+    """보고서 코드를 이름으로 변환"""
+    report_names = {
+        '11011': '사업보고서',
+        '11012': '반기보고서',
+        '11013': '1분기보고서', 
+        '11014': '3분기보고서'
+    }
+    return report_names.get(reprt_code, '알 수 없는 보고서')
 
 @app.route('/api/ratios/<corp_code>/<int:year>')
 def get_financial_ratios(corp_code, year):
     """재무비율 API"""
     try:
-        raw_data = fetcher.get_financial_statements(corp_code, str(year))
+        # 보고서 유형 파라미터 받기 (기본값: 사업보고서)
+        reprt_code = request.args.get('reprt_code', '11011')
+        
+        raw_data = fetcher.get_financial_statements(corp_code, str(year), reprt_code)
         if not raw_data:
             return jsonify({'error': '데이터를 찾을 수 없습니다.'}), 404
         
@@ -182,7 +209,9 @@ def get_financial_ratios(corp_code, year):
         return jsonify({
             'ratios': ratios,
             'year': year,
-            'corp_code': corp_code
+            'corp_code': corp_code,
+            'reprt_code': reprt_code,
+            'report_name': get_report_name(reprt_code)
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -191,12 +220,15 @@ def get_financial_ratios(corp_code, year):
 def get_ai_analysis(corp_code, year):
     """AI 재무분석 API"""
     try:
+        # 보고서 유형 파라미터 받기 (기본값: 사업보고서)
+        reprt_code = request.args.get('reprt_code', '11011')
+        
         # 회사 정보 조회
         company_info = searcher.get_by_corp_code(corp_code)
         company_name = company_info.get('corp_name', '알 수 없는 회사') if company_info else '알 수 없는 회사'
         
         # 재무제표 데이터 조회
-        raw_data = fetcher.get_financial_statements(corp_code, str(year))
+        raw_data = fetcher.get_financial_statements(corp_code, str(year), reprt_code)
         if not raw_data:
             return jsonify({'error': '재무제표 데이터를 찾을 수 없습니다.'}), 404
         
@@ -212,6 +244,8 @@ def get_ai_analysis(corp_code, year):
             'company_name': company_name,
             'year': year,
             'corp_code': corp_code,
+            'reprt_code': reprt_code,
+            'report_name': get_report_name(reprt_code),
             'ai_analysis': ai_analysis,
             'ai_enabled': ai_analyzer.enabled
         })
