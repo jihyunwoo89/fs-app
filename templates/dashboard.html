@@ -38,6 +38,56 @@
              margin-right: 5px;
          }
 
+         /* 할당량 초과 메시지 스타일 */
+         .quota-exceeded-message {
+             background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+             border: 2px solid #ffc107;
+             border-radius: 12px;
+             padding: 20px;
+             margin: 15px 0;
+             box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+             position: relative;
+             overflow: hidden;
+         }
+
+         .quota-exceeded-message::before {
+             content: '';
+             position: absolute;
+             top: 0;
+             left: 0;
+             right: 0;
+             height: 4px;
+             background: linear-gradient(90deg, #ff6b6b, #ffa500, #ff6b6b);
+             animation: pulse 2s ease-in-out infinite;
+         }
+
+         .quota-exceeded-message h2 {
+             color: #856404 !important;
+             margin-bottom: 15px;
+             font-size: 18px;
+         }
+
+         .quota-exceeded-message h3 {
+             color: #856404 !important;
+             margin-top: 15px;
+             margin-bottom: 10px;
+             font-size: 16px;
+         }
+
+         .quota-exceeded-message .fas.fa-ban {
+             color: #dc3545 !important;
+             font-size: 18px;
+         }
+
+         .quota-exceeded-message .fas.fa-sync {
+             color: #007bff !important;
+         }
+
+         @keyframes pulse {
+             0%, 100% { opacity: 0.7; }
+             50% { opacity: 1; }
+         }
+
          .ai-year-select {
              min-width: 100px;
              font-size: 13px;
@@ -2023,6 +2073,9 @@
          function formatAIAnalysis(analysisText) {
              if (!analysisText) return '';
              
+             // 할당량 초과 메시지 감지
+             const isQuotaExceeded = analysisText.includes('할당량 초과') || analysisText.includes('AI 분석 서비스 일시 중단');
+             
              // 마크다운 스타일 헤딩을 HTML로 변환
              let formatted = analysisText
                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -2039,9 +2092,15 @@
                  .replace(/⚠️/g, '<i class="fas fa-exclamation-triangle text-warning"></i>')
                  .replace(/🎯/g, '<i class="fas fa-bullseye text-danger"></i>')
                  .replace(/📉/g, '<i class="fas fa-chart-line-down text-danger"></i>')
-                 .replace(/🔍/g, '<i class="fas fa-search text-info"></i>');
+                 .replace(/🔍/g, '<i class="fas fa-search text-info"></i>')
+                 .replace(/🚫/g, '<i class="fas fa-ban text-danger"></i>')
+                 .replace(/🔄/g, '<i class="fas fa-sync text-primary"></i>')
+                 .replace(/🙏/g, '<i class="fas fa-pray text-secondary"></i>');
              
-             return `<div class="ai-analysis-text">${formatted}</div>`;
+             // 할당량 초과 메시지에 특별한 스타일 적용
+             const cssClass = isQuotaExceeded ? 'ai-analysis-text quota-exceeded-message' : 'ai-analysis-text';
+             
+             return `<div class="${cssClass}">${formatted}</div>`;
          }
 
          // 탭 전환 시 차트 리사이즈

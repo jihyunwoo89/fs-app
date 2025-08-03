@@ -201,6 +201,11 @@ class FinancialAnalysisAI:
                 print(f"예상치 못한 API 응답 구조: {result}")
                 return None
             
+            elif response.status_code == 429:
+                # 할당량 초과 오류 처리
+                print(f"❌ Gemini API 오류: {response.status_code}")
+                print(f"응답: {response.text}")
+                return "quota_exceeded"  # 특별한 반환값으로 할당량 초과를 알림
             else:
                 print(f"❌ Gemini API 오류: {response.status_code}")
                 print(f"응답: {response.text}")

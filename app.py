@@ -333,6 +333,23 @@ def get_ai_analysis(corp_code, year):
         # AI 분석 수행
         ai_analysis = ai_analyzer.analyze_financial_statement(company_name, parsed_data, ratios)
         
+        # 할당량 초과 시 사용자 친화적인 메시지로 변환
+        if ai_analysis == "quota_exceeded":
+            ai_analysis = """## 🚫 AI 분석 서비스 일시 중단
+
+**📊 Gemini AI 할당량 초과로 인해 현재 AI 분석을 제공할 수 없습니다.**
+
+### 🔄 **해결 방법:**
+- **24시간 후 다시 시도**: 무료 할당량이 매일 자정(UTC)에 리셋됩니다
+- **수동 분석**: 아래 재무제표와 차트를 참고하여 직접 분석해보세요
+
+### 📈 **분석 가이드:**
+1. **매출액과 영업이익** 증감률 확인
+2. **자산 대비 부채 비율** 검토  
+3. **전년 대비 성장률** 비교
+
+**죄송합니다. 조금 후에 다시 이용해주세요! 🙏**"""
+
         return jsonify({
             'company_name': company_name,
             'year': year,
@@ -340,7 +357,8 @@ def get_ai_analysis(corp_code, year):
             'reprt_code': reprt_code,
             'report_name': get_report_name(reprt_code),
             'ai_analysis': ai_analysis,
-            'ai_enabled': ai_analyzer.enabled
+            'ai_enabled': ai_analyzer.enabled,
+            'quota_exceeded': ai_analysis and "할당량 초과" in ai_analysis
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -376,13 +394,31 @@ def get_ai_comparison_analysis(corp_code):
         # AI 비교 분석 수행
         ai_analysis = ai_analyzer.analyze_comparison_data(company_name, comparison_data)
         
+        # 할당량 초과 시 사용자 친화적인 메시지로 변환
+        if ai_analysis == "quota_exceeded":
+            ai_analysis = """## 🚫 AI 비교분석 서비스 일시 중단
+
+**📊 Gemini AI 할당량 초과로 인해 현재 AI 비교분석을 제공할 수 없습니다.**
+
+### 🔄 **해결 방법:**
+- **24시간 후 다시 시도**: 무료 할당량이 매일 자정(UTC)에 리셋됩니다
+- **수동 비교**: 아래 비교 차트를 참고하여 직접 분석해보세요
+
+### 📊 **비교분석 가이드:**
+1. **매출 성장률**: 전년 대비 증가/감소율 확인
+2. **수익성 변화**: 영업이익률, 순이익률 비교
+3. **안정성 변화**: 부채비율, 유동비율 변화 추이
+
+**죄송합니다. 조금 후에 다시 이용해주세요! 🙏**"""
+
         return jsonify({
             'company_name': company_name,
             'current_year': current_year,
             'previous_year': previous_year,
             'corp_code': corp_code,
             'ai_analysis': ai_analysis,
-            'ai_enabled': ai_analyzer.enabled
+            'ai_enabled': ai_analyzer.enabled,
+            'quota_exceeded': ai_analysis and "할당량 초과" in ai_analysis
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
